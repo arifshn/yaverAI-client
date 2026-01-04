@@ -7,7 +7,6 @@ import type { RootState, AppDispatch } from "../../../store/store";
 export default function QueryLimitBadge() {
   const dispatch = useDispatch<AppDispatch>();
   const { queryLimit } = useSelector((state: RootState) => state.chat);
-  const { user } = useSelector((state: RootState) => state.account);
 
   useEffect(() => {
     dispatch(fetchQueryLimit());

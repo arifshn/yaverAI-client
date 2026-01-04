@@ -9,6 +9,7 @@ import type {
   PetitionLimitDto,
   CreatePetitionDto,
 } from "../models/IPetition";
+import { updateCredits } from "../../account/slices/creditSlice";
 
 interface PetitionState {
   templates: Record<string, PetitionTemplateDto[]>;
@@ -54,9 +55,17 @@ export const fetchTemplate = createAsyncThunk(
 
 export const createPetition = createAsyncThunk(
   "petition/createPetition",
-  async (dto: CreatePetitionDto, { rejectWithValue }) => {
+  async (dto: CreatePetitionDto, { rejectWithValue, dispatch }) => {
+    // ✅ dispatch ekle
     try {
-      return await petitionApi.createPetition(dto);
+      const response = await petitionApi.createPetition(dto);
+
+      // ✅ Krediyi güncelle
+      if (response.remainingCredits !== undefined) {
+        dispatch(updateCredits(response.remainingCredits));
+      }
+
+      return response.petition; // Sadece petition'ı döndür
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Dilekçe oluşturulamadı");
     }
@@ -153,7 +162,6 @@ export const petitionSlice = createSlice({
       })
       .addCase(fetchTemplates.rejected, (state) => {
         state.loading = false;
-        toast.error("Şablonlar yüklenemedi");
       })
 
       .addCase(fetchTemplate.pending, (state) => {
@@ -165,7 +173,6 @@ export const petitionSlice = createSlice({
       })
       .addCase(fetchTemplate.rejected, (state) => {
         state.loading = false;
-        toast.error("Şablon yüklenemedi");
       })
 
       .addCase(createPetition.pending, (state) => {
@@ -195,7 +202,6 @@ export const petitionSlice = createSlice({
       })
       .addCase(fetchPetition.rejected, (state) => {
         state.loading = false;
-        toast.error("Dilekçe yüklenemedi");
       })
 
       .addCase(deletePetition.fulfilled, (state, action) => {

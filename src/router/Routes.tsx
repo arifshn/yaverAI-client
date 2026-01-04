@@ -1,7 +1,5 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import App from "../App";
-import RegisterPage from "../features/account/pages/RegisterPage";
-import LoginPage from "../features/account/pages/LoginPage";
 import AuthGuard from "./AuthGuard";
 import MainLayout from "../layout/MainLayout";
 import ProfilePage from "../features/profile/pages/ProfilePage";
@@ -11,14 +9,31 @@ import PetitionPreviewPage from "../features/petition/pages/PetitionPreviewPage"
 import PetitionTemplatesPage from "../features/petition/pages/PetitionTemplatesPage";
 import MyPetitionsPage from "../features/petition/pages/MyPetitionsPage";
 import DocumentAnalysisPage from "../features/document/pages/DocumentAnalysisPage";
-
+import PaymentFailedPage from "../features/payment/pages/PaymentFailedPage";
+import PaymentSuccessPage from "../features/payment/pages/PaymentSuccessPage";
+import PricingPage from "../features/payment/pages/PricingPage";
+import SubscriptionManagement from "../features/payment/components/SubscriptionManagement";
+import HomePage from "../pages/HomePage";
+import ContactPage from "../pages/ContactPage";
+import GuidancePage from "../features/guidance/pages/GuidancePage";
+import RoadmapPage from "../features/guidance/pages/RoadmapPage";
+import DashboardPage from "../pages/DashboardPage";
+import PrivacyPage from "../pages/PrivacyPage";
+import TermsPage from "../pages/TermsPage";
+import NotFoundPage from "../pages/NotFoundPage";
+import ErrorPage from "../pages/ErrorPage";
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <ErrorPage />,
     children: [
-      { path: "register", element: <RegisterPage /> },
-      { path: "login", element: <LoginPage /> },
+      { path: "", element: <Navigate to="/home" /> },
+      { path: "home", element: <HomePage /> },
+      { path: "login", element: <Navigate to="/home" replace /> },
+      { path: "iletisim", element: <ContactPage /> },
+      { path: "gizlilik-politikasi", element: <PrivacyPage /> },
+      { path: "kullanim-sartlari", element: <TermsPage /> },
 
       {
         element: <AuthGuard />,
@@ -26,33 +41,52 @@ export const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              { path: "", element: <Navigate to="/home" /> },
-              { path: "home", element: <ChatPage /> },
-              { path: "profile", element: <ProfilePage /> },
+              { path: "panel", element: <DashboardPage /> },
+              { path: "sohbet", element: <ChatPage /> },
+              { path: "profil", element: <ProfilePage /> },
+              { path: "/rehber", element: <GuidancePage /> },
+              { path: "/rehber/yol-haritasi", element: <RoadmapPage /> },
               {
-                path: "/petition",
+                path: "/dilekce",
                 element: <PetitionTemplatesPage />,
               },
               {
-                path: "/petition/form/:id",
+                path: "/dilekce/olustur/:id/:slug?",
                 element: <PetitionFormPage />,
               },
               {
-                path: "/petition/preview/:id",
+                path: "/dilekce/onizleme/:id/:slug?",
                 element: <PetitionPreviewPage />,
               },
               {
-                path: "/petition/my-petitions",
+                path: "/dilekce/arsivim",
                 element: <MyPetitionsPage />,
               },
               {
-                path: "/document/analyze",
+                path: "/belge/analiz",
                 element: <DocumentAnalysisPage />,
+              },
+              {
+                path: "/paketler",
+                element: <PricingPage />,
+              },
+              {
+                path: "/odeme/basarili",
+                element: <PaymentSuccessPage />,
+              },
+              {
+                path: "/odeme/basarisiz",
+                element: <PaymentFailedPage />,
+              },
+              {
+                path: "/aboneliklerim",
+                element: <SubscriptionManagement />,
               },
             ],
           },
         ],
       },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);

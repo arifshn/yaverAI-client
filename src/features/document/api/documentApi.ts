@@ -1,5 +1,5 @@
 import axiosClient from "../../../shared/api/axiosClient";
-import type { PremiumCheckDto, DocumentAnalysisDto } from "../models/IDocument";
+import type { PremiumCheckDto, DocumentAnalysisDto, DocumentAnalysisResponse } from "../models/IDocument";
 
 export const documentApi = {
   checkPremium: () =>
@@ -13,7 +13,7 @@ export const documentApi = {
     formData.append("documentType", documentType);
 
     return axiosClient
-      .post<DocumentAnalysisDto>("/DocumentAnalysis/analyze", formData, {})
+      .post<DocumentAnalysisResponse>("/DocumentAnalysis/analyze", formData)
       .then((res) => res.data);
   },
 

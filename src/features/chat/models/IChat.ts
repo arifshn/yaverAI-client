@@ -9,8 +9,8 @@ export interface ChatDto {
 
 export interface MessageDto {
   id: number;
-  role: string;
   content: string;
+  role: 'user' | 'assistant';
   createdAt: string;
   files?: ChatFileDto[];
 }
@@ -36,4 +36,8 @@ export interface QueryLimitDto {
   maxQueries: number;
   isUnlimited: boolean;
   resetDate: string;
+}
+export interface SendMessageResponse {
+  message: MessageDto;
+  remainingCredits: number; // ✅ YENİ
 }

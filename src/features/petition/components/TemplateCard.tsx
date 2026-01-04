@@ -4,7 +4,7 @@ import {
   Briefcase,
   Shield,
   ShoppingCart,
-  ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import type { PetitionTemplateDto } from "../models/IPetition";
 
@@ -25,35 +25,43 @@ export default function TemplateCard({ template, onClick }: TemplateCardProps) {
   return (
     <div
       onClick={onClick}
-      className="group bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 hover:bg-slate-800/70 transition-all cursor-pointer"
+      className="group relative bg-[#1c1d2e]/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-purple-500/30 transition-all duration-300 cursor-pointer overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-4 flex-1">
-          {/* Icon */}
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 text-white group-hover:scale-110 transition-transform">
-            {iconMap[template.icon] || <FileText className="w-8 h-8" />}
-          </div>
+      {/* Hover Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-              {template.name}
-            </h3>
-            <p className="text-sm text-slate-400 mb-3 line-clamp-2">
-              {template.description}
-            </p>
-            <div className="flex items-center space-x-2 text-xs text-slate-500">
-              <span className="px-2 py-1 bg-slate-700/50 rounded-full">
-                {template.category}
-              </span>
-              <span>•</span>
-              <span>{template.fields.length} alan</span>
-            </div>
+      <div className="relative">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="w-12 h-12 bg-gray-800/50 rounded-xl flex items-center justify-center text-gray-400 group-hover:text-white group-hover:bg-purple-600 transition-all duration-300 shadow-lg group-hover:shadow-purple-500/25">
+             {iconMap[template.icon] || <FileText className="w-6 h-6" />}
           </div>
+          <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-full text-xs font-medium text-gray-400 group-hover:border-purple-500/30 group-hover:text-purple-300 transition-colors">
+            {template.category}
+          </span>
         </div>
 
-        {/* Arrow */}
-        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-blue-400 group-hover:translate-x-1 transition-all flex-shrink-0 ml-4" />
+        {/* Content */}
+        <div>
+          <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+            {template.name}
+          </h3>
+          <p className="text-sm text-gray-400 line-clamp-2 mb-4 group-hover:text-gray-300 transition-colors">
+            {template.description}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+          <span className="text-xs text-gray-500">
+            {template.fields.length} alan
+          </span>
+          
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-400 group-hover:text-white transition-colors">
+            Oluştur
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
       </div>
     </div>
   );

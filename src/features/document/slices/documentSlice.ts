@@ -3,6 +3,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import { documentApi } from "../api/documentApi";
 import type { DocumentAnalysisDto, PremiumCheckDto } from "../models/IDocument";
+import { updateCredits } from "../../account/slices/creditSlice";
 
 interface DocumentState {
   analyses: DocumentAnalysisDto[];
@@ -10,6 +11,7 @@ interface DocumentState {
   premiumCheck: PremiumCheckDto | null;
   loading: boolean;
   analyzing: boolean;
+  error: string | null;
 }
 
 const initialState: DocumentState = {
@@ -18,6 +20,7 @@ const initialState: DocumentState = {
   premiumCheck: null,
   loading: false,
   analyzing: false,
+  error: null,
 };
 
 export const checkPremium = createAsyncThunk(
@@ -37,10 +40,21 @@ export const analyzeDocument = createAsyncThunk(
   "document/analyzeDocument",
   async (
     { file, documentType }: { file: File; documentType?: string },
-    { rejectWithValue }
+    { rejectWithValue, dispatch }
   ) => {
     try {
-      return await documentApi.analyzeDocument(file, documentType);
+      const response = await documentApi.analyzeDocument(file, documentType);
+
+      // ✅ Krediyi güncelle
+      // Backend: { analysis: ..., creditInfo: { remainingCredits: ... } }
+      if (response.creditInfo?.remainingCredits !== undefined) {
+        dispatch(updateCredits(response.creditInfo.remainingCredits));
+      } else if (response.remainingCredits !== undefined) {
+        // Fallback for older API structure
+        dispatch(updateCredits(response.remainingCredits));
+      }
+
+      return response;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data || "Doküman analizi yapılamadı"
@@ -89,6 +103,14 @@ export const documentSlice = createSlice({
   reducers: {
     clearCurrentAnalysis: (state) => {
       state.currentAnalysis = null;
+      state.error = null;
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
+    setCurrentAnalysis: (state, action) => {
+      state.currentAnalysis = action.payload;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -99,15 +121,21 @@ export const documentSlice = createSlice({
 
       .addCase(analyzeDocument.pending, (state) => {
         state.analyzing = true;
+        state.error = null; // Clear previous error
       })
       .addCase(analyzeDocument.fulfilled, (state, action) => {
         state.analyzing = false;
-        state.currentAnalysis = action.payload;
+        // ✅ Fix: Extract 'analysis' from the response object
+        state.currentAnalysis = action.payload.analysis;
+        state.error = null;
         toast.success("Analiz tamamlandı!");
       })
       .addCase(analyzeDocument.rejected, (state, action) => {
         state.analyzing = false;
         const error = action.payload as any;
+
+        // Store error message persistently
+        state.error = error?.message || "Analiz yapılamadı";
 
         if (error?.message?.includes("Premium")) {
           toast.error("Bu özellik Premium üyeler içindir!");
@@ -125,7 +153,6 @@ export const documentSlice = createSlice({
       })
       .addCase(fetchMyAnalyses.rejected, (state) => {
         state.loading = false;
-        toast.error("Analizler yüklenemedi");
       })
 
       .addCase(fetchAnalysis.pending, (state) => {
@@ -137,7 +164,6 @@ export const documentSlice = createSlice({
       })
       .addCase(fetchAnalysis.rejected, (state) => {
         state.loading = false;
-        toast.error("Analiz yüklenemedi");
       })
 
       .addCase(deleteAnalysis.fulfilled, (state, action) => {
@@ -150,4 +176,4 @@ export const documentSlice = createSlice({
   },
 });
 
-export const { clearCurrentAnalysis } = documentSlice.actions;
+export const { clearCurrentAnalysis, clearError, setCurrentAnalysis } = documentSlice.actions;

@@ -4,6 +4,7 @@ import { accountSlice } from "../features/account/slices/accountSlice";
 import { chatSlice } from "../features/chat/slices/chatSlice";
 import { petitionSlice } from "../features/petition/slices/petitionSlice";
 import { documentSlice } from "../features/document/slices/documentSlice";
+import { creditSlice } from "../features/account/slices/creditSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     chat: chatSlice.reducer,
     petition: petitionSlice.reducer,
     document: documentSlice.reducer,
+    credit: creditSlice.reducer,
   },
 });
 export type RootState = ReturnType<typeof store.getState>;

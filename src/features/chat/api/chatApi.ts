@@ -2,22 +2,31 @@ import axiosClient from "../../../shared/api/axiosClient";
 import type {
   ChatDto,
   ChatDetailDto,
-  MessageDto,
   QueryLimitDto,
+  SendMessageResponse,
 } from "../models/IChat";
 
 export const chatApi = {
   getChats: () => axiosClient.get<ChatDto[]>("/Chat").then((res) => res.data),
 
-  createChat: (title?: string) =>
-    axiosClient.post<ChatDetailDto>("/Chat", { title }).then((res) => res.data),
+  createChat: (data: { title?: string; type?: string }) =>
+    axiosClient.post<ChatDetailDto>("/Chat", data).then((res) => res.data),
 
   getChat: (chatId: number) =>
     axiosClient.get<ChatDetailDto>(`/Chat/${chatId}`).then((res) => res.data),
 
-  sendMessage: (chatId: number, content: string, files?: File[]) => {
+  sendMessage: (
+    chatId: number,
+    content: string,
+    files?: File[],
+    historyJson?: string,
+    documentContext?: string
+  ) => {
     const formData = new FormData();
     formData.append("content", content);
+
+    if (historyJson) formData.append("historyJson", historyJson);
+    if (documentContext) formData.append("documentContext", documentContext);
 
     if (files && files.length > 0) {
       files.forEach((file) => {
@@ -26,7 +35,7 @@ export const chatApi = {
     }
 
     return axiosClient
-      .post<MessageDto>(`/Chat/${chatId}/message`, formData, {
+      .post<SendMessageResponse>(`/Chat/${chatId}/message`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

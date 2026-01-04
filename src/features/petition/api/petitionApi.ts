@@ -5,6 +5,7 @@ import type {
   PetitionPreviewDto,
   UserPetitionDto,
   PetitionLimitDto,
+  CreatePetitionResponse,
 } from "../models/IPetition";
 
 export const petitionApi = {
@@ -20,7 +21,7 @@ export const petitionApi = {
 
   createPetition: (dto: CreatePetitionDto) =>
     axiosClient
-      .post<PetitionPreviewDto>("/Petition/create", dto)
+      .post<CreatePetitionResponse>("/Petition/create", dto)
       .then((res) => res.data),
 
   getMyPetitions: () =>

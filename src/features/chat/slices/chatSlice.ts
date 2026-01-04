@@ -7,6 +7,7 @@ import type {
   QueryLimitDto,
   MessageDto,
 } from "../models/IChat";
+import { updateCredits } from "../../account/slices/creditSlice";
 
 interface ChatState {
   chats: ChatDto[];
@@ -65,10 +66,17 @@ export const sendMessage = createAsyncThunk(
       content,
       files,
     }: { chatId: number; content: string; files?: File[] },
-    { rejectWithValue }
+    { rejectWithValue, dispatch }
   ) => {
     try {
-      return await chatApi.sendMessage(chatId, content, files);
+      const response = await chatApi.sendMessage(chatId, content, files);
+
+      // ✅ Krediyi güncelle
+      if (response.remainingCredits !== undefined) {
+        dispatch(updateCredits(response.remainingCredits));
+      }
+
+      return response.message; // Sadece message'ı döndür
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Mesaj gönderilemedi");
     }
@@ -127,9 +135,8 @@ export const chatSlice = createSlice({
         state.loading = false;
         state.chats = action.payload;
       })
-      .addCase(fetchChats.rejected, (state, action) => {
+      .addCase(fetchChats.rejected, (state) => {
         state.loading = false;
-        toast.error("Sohbetler yüklenemedi");
       })
 
       .addCase(createChat.pending, (state) => {
@@ -155,7 +162,6 @@ export const chatSlice = createSlice({
       })
       .addCase(fetchChatDetail.rejected, (state) => {
         state.loading = false;
-        toast.error("Sohbet yüklenemedi");
       })
 
       .addCase(sendMessage.pending, (state) => {

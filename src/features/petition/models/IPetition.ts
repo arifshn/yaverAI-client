@@ -23,6 +23,10 @@ export interface PetitionPreviewDto {
   templateName: string;
   generatedContent: string;
   createdAt: string;
+  signerName?: string;
+  signerPhone?: string;
+  signerAddress?: string; // ✅ YENİ
+  institutionName?: string;
 }
 
 export interface UserPetitionDto {
@@ -43,4 +47,8 @@ export interface PetitionLimitDto {
 export interface CreatePetitionDto {
   templateId: number;
   formData: Record<string, string>;
+}
+export interface CreatePetitionResponse {
+  petition: PetitionPreviewDto;
+  remainingCredits: number; // ✅ YENİ
 }

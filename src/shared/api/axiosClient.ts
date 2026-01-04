@@ -1,60 +1,45 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:5239/api/",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5239/api/",
 });
 
 axiosClient.interceptors.request.use(
   (config) => {
-    console.log("🔵 INTERCEPTOR ÇALIŞTI");
+    // ✅ FIX: Önce token'ı direkt al, yoksa user içinden al
+    let token = localStorage.getItem("token");
 
-    const userString = localStorage.getItem("user");
-    console.log("🔵 User string:", userString);
-
-    if (userString) {
-      try {
-        const user = JSON.parse(userString);
-        console.log("🔵 Parsed user:", user);
-
-        const token = user.token || user.Tokens || user.Token;
-        console.log("🔵 Token found:", token?.substring(0, 30) + "...");
-
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-          console.log("✅ Authorization header set!");
-        } else {
-          console.warn("⚠️ Token bulunamadı!");
+    if (!token) {
+      const userString = localStorage.getItem("user");
+      if (userString) {
+        try {
+          const user = JSON.parse(userString);
+          token = user.token;
+        } catch {
+          // Silent fail on parse error
         }
-      } catch (error) {
-        console.error("❌ User parse hatası:", error);
       }
-    } else {
-      console.warn("⚠️ localStorage'da user yok!");
     }
 
-    console.log("🔵 Final headers:", config.headers);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {
-    console.error("❌ Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
 
 axiosClient.interceptors.response.use(
   (response) => {
-    console.log("✅ Response success:", response.config.url);
     return response;
   },
   (error) => {
-    console.error(
-      "❌ Response error:",
-      error.config?.url,
-      error.response?.status
-    );
-
     if (error.response?.status === 401) {
-      console.error("❌ 401 Unauthorized");
+      // Hem token hem user'ı temizle
+      localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
     }

@@ -9,6 +9,16 @@ export interface DocumentAnalysisDto {
   warnings: string[];
   suggestions: string[];
   createdAt: string;
+  remainingCredits?: number;
+}
+
+export interface DocumentAnalysisResponse {
+  analysis: DocumentAnalysisDto;
+  creditInfo?: {
+    usedCredits: number;
+    remainingCredits: number;
+  };
+  remainingCredits?: number; // Fallback for older API versions
 }
 
 export interface PremiumCheckDto {
