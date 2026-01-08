@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Settings,
   LogOut,
   User,
   Search,
@@ -11,15 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Map,
-  Activity,
   CreditCard
 } from "lucide-react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCreditInfo } from "../features/account/slices/creditSlice";
-import { logout } from "../features/account/slices/accountSlice";
+import { logout, logoutUser } from "../features/account/slices/accountSlice";
+import { clearCurrentAnalysis } from "../features/document/slices/documentSlice";
 import type { AppDispatch, RootState } from "../store/store";
-import LegalDisclaimer from "../components/LegalDisclaimer";
 
 export default function MainLayout() {
   const navigate = useNavigate();
@@ -43,7 +41,8 @@ export default function MainLayout() {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutUser());
+    dispatch(logout()); // Ensure local state is cleared immediately visually as well if needed, though thunk handles it.
   };
 
 
@@ -58,20 +57,9 @@ export default function MainLayout() {
   {
     /* Yüzde hesaplama mantığı */
   }
-  const calculateProgress = () => {
-    if (!user) return 0;
-    const currentCredits = creditInfo?.currentCredits ?? user.credits ?? 0;
-    
-    if (user.isPremium) {
-      // Premium: Total kredi / 1520 (1500 başlangıç + 20 günlük)
-      const maxCredits = 1520;
-      return Math.min((currentCredits / maxCredits) * 100, 100);
-    }
-    // Ücretsiz: 0-20 arası
-    return Math.min((currentCredits / 20) * 100, 100);
-  };
 
-  const progressWidth = calculateProgress();
+
+
   const currentCreditsDisplay = creditInfo?.currentCredits ?? user?.credits ?? 0;
   
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -102,39 +90,51 @@ export default function MainLayout() {
       </div>
 
       {/* User Info Compact (Only Open) */}
+      {/* User Info Compact (Only Open) */}
       {(sidebarOpen || isMobile) && (
-        <div className="px-6 mb-8">
-           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-colors">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold overflow-hidden">
+        <div className="px-6 mb-6">
+           <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 hover:border-indigo-500/30 transition-all group shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
                  {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                  ) : (
-                    user?.firstName?.charAt(0) || "U"
+                    <span className="text-xl">{user?.firstName?.charAt(0) || "U"}</span>
                  )}
               </div>
-              <div className="min-w-0">
-                 <p className="text-xs font-bold text-white truncate">{user?.firstName || user?.username}</p>
-                 <p className="text-[9px] text-gray-500 uppercase tracking-wider">{user?.isPremium ? 'Premium' : 'Standart'}</p>
+              <div className="min-w-0 flex-1">
+                 <p className="text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">{user?.firstName || user?.username}</p>
+                 <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mt-0.5">{user?.isPremium ? 'Premium Üye' : 'Standart Üye'}</p>
               </div>
            </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-none">
+      <nav className={`${!isMobile && !sidebarOpen ? '' : 'px-4'} ${isMobile ? 'py-2 space-y-2' : 'flex-1 overflow-y-auto px-4 space-y-2 scrollbar-none py-2'}`}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || (item.path !== '/panel' && location.pathname.startsWith(item.path));
           
+          const handleClick = () => {
+              if (item.path === '/belge/analiz') {
+                  localStorage.removeItem('lastAnalysis');
+                  dispatch(clearCurrentAnalysis());
+              }
+              if (item.path === '/rehber') {
+                  localStorage.removeItem('lastRoadmap');
+              }
+          };
+
           if (!sidebarOpen && !isMobile) {
             return (
                  <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all relative group ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    onClick={handleClick}
+                    className={`flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all relative group ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'}`}
                     title={item.label}
                  >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-6 h-6" />
                  </Link>
             )
           }
@@ -143,62 +143,68 @@ export default function MainLayout() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3.5 rounded-lg transition-all group relative ${
+              onClick={handleClick}
+              className={`flex items-center gap-4 px-5 py-4 rounded-xl transition-all group relative ${
                 isActive
-                  ? "bg-white/[0.04] text-white border border-white/10"
-                  : "text-gray-400 hover:bg-white/[0.02] hover:text-white border border-transparent"
+                  ? "bg-white/[0.08] text-white border border-white/10 shadow-lg shadow-black/20"
+                  : "text-gray-400 hover:bg-white/[0.04] hover:text-white border border-transparent"
               }`}
             >
-              <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? "text-indigo-400" : "text-gray-500 group-hover:text-indigo-400"}`} />
-              <span className="text-xs font-bold uppercase tracking-wider">{item.label}</span>
-              {isActive && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-l-full shadow-[0_0_10px_#6366f1]"></div>}
+              <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? "text-indigo-400" : "text-gray-500 group-hover:text-indigo-400"}`} />
+              <span className="text-xs font-bold uppercase tracking-widest">{item.label}</span>
+              {isActive && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-indigo-500 rounded-l-full shadow-[0_0_15px_#6366f1]"></div>}
             </Link>
           );
         })}
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t border-white/5 space-y-4">
+      <div className={`p-4 border-t border-white/5 space-y-4 bg-black/20 ${!isMobile ? '' : 'pb-24'}`}>
         
         {/* Credits Display (Only Open) */}
         {(sidebarOpen || isMobile) && (
-          <div className="p-4 rounded-xl bg-indigo-900/10 border border-indigo-500/10 group hover:border-indigo-500/20 transition-all">
-            <div className="flex items-center justify-between mb-2">
-               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Kredi Limiti</span>
-               <span className="text-[10px] font-bold text-white">{currentCreditsDisplay} / {user?.isPremium ? '∞' : '20'}</span>
+          <div className="mx-2 mb-2 p-5 rounded-2xl bg-gradient-to-br from-indigo-900/20 to-[#0a0b14] border border-white/5 relative overflow-hidden group hover:border-indigo-500/30 transition-colors">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            
+            <div className="flex items-center justify-between mb-2 relative z-10">
+               <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest flex items-center gap-2">
+                 <CreditCard className="w-3.5 h-3.5" />
+                 Bakiye
+               </span>
+               {user?.isPremium && <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/20 shadow-sm shadow-amber-500/10">PREMIUM</span>}
             </div>
-            {/* Progress */}
-             <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-700"
-                style={{ width: `${progressWidth}%` }}
-              />
+
+            <div className="flex items-end gap-2 relative z-10">
+              <span className="text-3xl font-black text-white tracking-tighter">
+                {currentCreditsDisplay}
+              </span>
+              <span className="text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">{user?.isPremium ? 'Premium Kredi' : 'Kredi'}</span>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className={`flex gap-2 ${!sidebarOpen && !isMobile ? 'flex-col' : ''}`}>
+        <div className={`grid ${!sidebarOpen && !isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
             <button
               onClick={() => navigate("/profil")}
-              className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/5 text-gray-400 hover:text-white transition-all ${!sidebarOpen && !isMobile ? 'w-10 h-10 aspect-square mx-auto' : ''}`}
-              title="Ayarlar"
+              className={`flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.04] hover:bg-white/10 text-gray-400 hover:text-white transition-all group ${!sidebarOpen && !isMobile ? 'w-12 h-12 aspect-square mx-auto' : ''}`}
+              title="Profilim"
             >
-              <User className="w-4 h-4" />
+              <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
               {(sidebarOpen || isMobile) && <span className="text-[10px] font-bold uppercase tracking-wider">Profilim</span>}
             </button>
 
             <button
               onClick={handleLogout}
-              className={`flex items-center justify-center gap-2 p-2 rounded-lg border border-red-500/10 bg-red-500/[0.02] hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-all ${!sidebarOpen && !isMobile ? 'w-10 h-10 aspect-square mx-auto' : ''}`}
+              className={`flex items-center justify-center gap-2 p-3 rounded-xl border border-red-500/10 bg-red-500/[0.04] hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-all group ${!sidebarOpen && !isMobile ? 'w-12 h-12 aspect-square mx-auto' : ''}`}
               title="Çıkış"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              {(sidebarOpen || isMobile) && <span className="text-[10px] font-bold uppercase tracking-wider">Çıkış</span>}
             </button>
         </div>
 
-        {/* Legal Disclaimer (Only Open) */}
-        {(sidebarOpen || isMobile) && <LegalDisclaimer />}
+        {/* Legal Disclaimer removed from here and moved to Dashboard */}
       </div>
     </>
   );
@@ -214,7 +220,7 @@ export default function MainLayout() {
       {/* Desktop Sidebar */}
       <aside
         className={`hidden md:flex flex-col bg-gradient-to-b from-[#0a0b14] via-[#0a0b14]/80 to-[#0a0b14]/40 backdrop-blur-xl border-r border-white/5 transition-all duration-300 relative z-20 ${
-          sidebarOpen ? "w-[320px]" : "w-24"
+          sidebarOpen ? "w-[320px]" : "w-28"
         }`}
       >
         <SidebarContent />
@@ -250,7 +256,7 @@ export default function MainLayout() {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex-1 overflow-hidden pt-4 relative z-10">
+        <div className="flex-1 overflow-y-auto pt-4 relative z-10 scrollbar-none">
             <SidebarContent isMobile />
         </div>
       </aside>
@@ -258,7 +264,7 @@ export default function MainLayout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Mobile Header */}
-        <div className="md:hidden h-16 bg-gradient-to-r from-[#0a0b14] to-[#111222] backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sticky top-0 z-20">
+        <div className="md:hidden h-16 bg-gradient-to-r from-[#0a0b14] to-[#111222] backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sticky top-0 z-50 pt-[env(safe-area-inset-top)]">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="p-2 -ml-2 text-gray-400 hover:text-white"

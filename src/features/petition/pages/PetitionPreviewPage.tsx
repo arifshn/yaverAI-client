@@ -7,10 +7,7 @@ import {
   FileText,
   History,
   Download,
-  Share2,
   Activity,
-  Printer,
-  Copy,
   Plus
 } from "lucide-react";
 import {
@@ -70,7 +67,7 @@ export default function PetitionPreviewPage() {
             <div className="absolute inset-0 border-2 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
             <Activity className="absolute inset-0 m-auto w-8 h-8 text-indigo-400 animate-pulse" />
           </div>
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Hukuki belge hazırlanıyor...</p>
+          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Belge hazırlanıyor...</p>
         </div>
       </div>
     );

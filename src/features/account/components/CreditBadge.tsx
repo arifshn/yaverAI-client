@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { fetchCreditInfo } from "../slices/creditSlice";
-import { Coins, Sparkles, Plus } from "lucide-react";
+import { Coins, Sparkles } from "lucide-react";
 
 export default function CreditBadge() {
   const dispatch = useAppDispatch();
@@ -16,54 +16,41 @@ export default function CreditBadge() {
 
   if (!user || loading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg animate-pulse">
-        <div className="w-4 h-4 bg-gray-300 rounded-full" />
-        <div className="w-12 h-4 bg-gray-300 rounded" />
-      </div>
+      <div className="h-9 w-24 bg-white/5 rounded-full animate-pulse" />
     );
   }
 
   const credits = creditInfo?.currentCredits ?? user.credits ?? 0;
   const isPremium = user.isPremium;
 
-  // Premium kullanıcılar için günlük kredi hesaplama (basitleştirilmiş)
-  // Gerçek hesaplama backend'de yapılıyor, burada sadece gösterim için
-  const dailyCredits = isPremium ? Math.min(credits, 20) : credits;
-  const extraCredits = isPremium && credits > 20 ? credits - 20 : 0;
-
-  // Kredi durumuna göre renk
-  const getColorClass = () => {
-    if (isPremium)
-      return "bg-gradient-to-r from-purple-500 to-pink-500 text-white";
-    if (credits <= 5) return "bg-red-100 text-red-700 border border-red-300";
-    if (credits <= 10)
-      return "bg-yellow-100 text-yellow-700 border border-yellow-300";
-    return "bg-blue-100 text-blue-700 border border-blue-300";
-  };
-
   return (
-    <div
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-all ${getColorClass()}`}
-      title={isPremium && extraCredits > 0 ? `Günlük: ${dailyCredits} | Ek: ${extraCredits}` : undefined}
-    >
-      {isPremium ? (
-        <Sparkles className="w-4 h-4" />
-      ) : (
-        <Coins className="w-4 h-4" />
-      )}
-      <span className="text-sm font-semibold">{credits}</span>
-      <span className="text-xs opacity-80">Kredi</span>
+    <div className={`
+      relative group flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300
+      ${isPremium 
+        ? "bg-gradient-to-r from-amber-500/10 to-orange-600/10 border-amber-500/20 hover:border-amber-500/40" 
+        : "bg-white/5 border-white/10 hover:border-indigo-500/30 hover:bg-white/10"
+      }
+    `}>
+      {/* Glow Effect */}
       {isPremium && (
-        <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-white/20 rounded text-white font-bold">
-          PRO
-        </span>
+        <div className="absolute inset-0 bg-amber-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
-      {isPremium && extraCredits > 0 && (
-        <span className="ml-1 flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-white/30 rounded text-white font-bold">
-          <Plus className="w-2.5 h-2.5" />
-          {extraCredits}
+
+      <div className={`
+        relative z-10 flex items-center justify-center w-5 h-5 rounded-full
+        ${isPremium ? "bg-gradient-to-br from-amber-400 to-orange-600 shadow-lg shadow-amber-500/20" : "bg-indigo-500/20 text-indigo-400"}
+      `}>
+         {isPremium ? <Sparkles className="w-3 h-3 text-white" /> : <Coins className="w-3 h-3" />}
+      </div>
+
+      <div className="relative z-10 flex flex-col leading-none">
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${isPremium ? "text-amber-500" : "text-gray-400"}`}>
+            {isPremium ? 'Premium' : 'Kredi'}
         </span>
-      )}
+        <span className={`text-sm font-black tracking-tight ${isPremium ? "text-white" : "text-white"}`}>
+            {credits}
+        </span>
+      </div>
     </div>
   );
 }

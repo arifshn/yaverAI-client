@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, AlertCircle, ChevronDown, Calendar, AlignLeft, Type } from "lucide-react";
+import { Send, AlertCircle, ChevronDown, Calendar, AlignLeft, Type, Banknote, Hash, Phone, CreditCard, User } from "lucide-react";
 import type { PetitionTemplateDto } from "../models/IPetition";
 
 interface PetitionFormProps {
@@ -16,10 +16,59 @@ export default function PetitionForm({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (fieldName: string, value: string) => {
-    setFormData({ ...formData, [fieldName]: value });
-    if (errors[fieldName]) {
-      setErrors({ ...errors, [fieldName]: "" });
+  const handleFieldChange = (field: any, value: string) => {
+    let newValue = value;
+
+    const lowerName = field.fieldName.toLowerCase();
+    
+    // Alan türleri belirleme
+    const isPhone = lowerName.includes("tel") || lowerName.includes("gsm") || lowerName.includes("phone");
+    const isTc = lowerName.includes("tc") || lowerName.includes("tckn") || lowerName.includes("kimlik");
+    const isTax = lowerName.includes("tax") || lowerName.includes("vergi");
+    
+    // Monetary & Numeric keywords
+    const isMoney = 
+      lowerName.includes("bedel") || 
+      lowerName.includes("tutar") || 
+      lowerName.includes("fiyat") || 
+      lowerName.includes("ucret") || 
+      lowerName.includes("ücret") || 
+      lowerName.includes("maas") || 
+      lowerName.includes("maaş") || 
+      lowerName.includes("borc") || 
+      lowerName.includes("borç") || 
+      lowerName.includes("alacak") || 
+      lowerName.includes("para") ||
+      lowerName.includes("alimony") || 
+      lowerName.includes("rent") || 
+      lowerName.includes("amount") || 
+      lowerName.includes("salary");
+
+    const isNumeric = isPhone || isTc || isTax || isMoney;
+
+    if (isNumeric) {
+      // Sadece rakamları al
+      newValue = value.replace(/\D/g, "");
+
+      // TC Kimlik 11 hane sınırı
+      if (isTc && newValue.length > 11) {
+        newValue = newValue.slice(0, 11);
+      }
+      
+      // Telefon 11 hane sınırı (05xxxxxxxxx)
+      if (isPhone && newValue.length > 11) {
+        newValue = newValue.slice(0, 11);
+      }
+      
+      // Vergi no 10 hane sınırı
+      if (isTax && newValue.length > 10) {
+        newValue = newValue.slice(0, 10);
+      }
+    }
+
+    setFormData({ ...formData, [field.fieldName]: newValue });
+    if (errors[field.fieldName]) {
+      setErrors({ ...errors, [field.fieldName]: "" });
     }
   };
 
@@ -27,8 +76,23 @@ export default function PetitionForm({
     const newErrors: Record<string, string> = {};
 
     template.fields.forEach((field) => {
+      // Zorunluluk kontrolü
       if (field.isRequired && !formData[field.fieldName]?.trim()) {
         newErrors[field.fieldName] = `${field.label} alanı zorunludur`;
+      }
+      
+      const lowerName = field.fieldName.toLowerCase();
+      
+      // TC Kimlik uzunluk kontrolü
+      const isTc = lowerName.includes("tc") || lowerName.includes("tckn") || lowerName.includes("kimlik");
+      if (isTc && formData[field.fieldName] && formData[field.fieldName].length !== 11) {
+         newErrors[field.fieldName] = "TC Kimlik Numarası 11 haneli olmalıdır";
+      }
+
+      // Telefon uzunluk kontrolü (Basit kontrol)
+      const isPhone = lowerName.includes("tel") || lowerName.includes("gsm") || lowerName.includes("phone");
+       if (isPhone && formData[field.fieldName] && formData[field.fieldName].length < 10) {
+         newErrors[field.fieldName] = "Geçerli bir telefon numarası giriniz";
       }
     });
 
@@ -49,16 +113,43 @@ export default function PetitionForm({
       "w-full px-5 py-4 bg-[#13141f] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500/50 transition-all font-medium text-[15px]";
 
     const errorClasses = errors[field.fieldName]
-      ? "border-red-500/50 focus:border-red-500"
+      ? "border-red-500/50 focus:border-red-500 bg-red-500/5"
       : "border-white/10 focus:border-slate-500";
 
+    const lowerName = field.fieldName.toLowerCase();
+    
+    // Check    // Monetary & Numeric keywords
+    const isMoney = 
+      lowerName.includes("bedel") || 
+      lowerName.includes("tutar") || 
+      lowerName.includes("fiyat") || 
+      lowerName.includes("ucret") || 
+      lowerName.includes("ücret") || 
+      lowerName.includes("maas") || 
+      lowerName.includes("maaş") || 
+      lowerName.includes("borc") || 
+      lowerName.includes("borç") || 
+      lowerName.includes("alacak") || 
+      lowerName.includes("para") ||
+      lowerName.includes("alimony") || // Nafaka
+      lowerName.includes("rent") ||    // Kira
+      lowerName.includes("amount") ||  // Miktar/Tutar
+      lowerName.includes("salary");    // Maaş
+
+    const isPhone = lowerName.includes("tel") || lowerName.includes("gsm") || lowerName.includes("phone");
+    const isTc = lowerName.includes("tc") || lowerName.includes("tckn") || lowerName.includes("kimlik");
+    const isTax = lowerName.includes("tax") || lowerName.includes("vergi");
+    const isPerson = lowerName.includes("ad") || lowerName.includes("soyad") || lowerName.includes("isim") || lowerName.includes("taraf") || lowerName.includes("sahibi") || lowerName.includes("name"); 
+
+    const isNumeric = isPhone || isTc || isTax || isMoney; 
+      
     switch (field.fieldType) {
       case "textarea":
         return (
           <div className="relative group">
             <textarea
               value={formData[field.fieldName] || ""}
-              onChange={(e) => handleChange(field.fieldName, e.target.value)}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
               placeholder={field.placeholder}
               rows={5}
               className={`${commonClasses} ${errorClasses} resize-none pl-12`}
@@ -73,7 +164,7 @@ export default function PetitionForm({
             <input
               type="date"
               value={formData[field.fieldName] || ""}
-              onChange={(e) => handleChange(field.fieldName, e.target.value)}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
               className={`${commonClasses} ${errorClasses} pl-12`}
             />
              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
@@ -85,7 +176,7 @@ export default function PetitionForm({
           <div className="relative group">
             <select
               value={formData[field.fieldName] || ""}
-              onChange={(e) => handleChange(field.fieldName, e.target.value)}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
               className={`${commonClasses} ${errorClasses} appearance-none pl-12 cursor-pointer`}
             >
               <option value="">Seçiniz</option>
@@ -101,16 +192,30 @@ export default function PetitionForm({
         );
 
       default:
+        // IBAN check
+        const isIban = lowerName.includes("iban");
+
+        // Icon Selection Logic
+        let IconComponent = Type; // Default
+        if (isMoney) IconComponent = Banknote;
+        else if (isPhone) IconComponent = Phone;
+        else if (isTc || isTax || isIban) IconComponent = CreditCard; // ID/Card like
+        else if (isNumeric) IconComponent = Hash;
+        else if (isPerson && !isNumeric) IconComponent = User;
+        
         return (
           <div className="relative group">
             <input
-              type="text"
+              type={isNumeric && !isIban ? "number" : "text"} 
+              inputMode={isNumeric && !isIban ? "numeric" : "text"}
+              min="0"
+              onWheel={(e) => e.currentTarget.blur()} // Prevent scroll change
               value={formData[field.fieldName] || ""}
-              onChange={(e) => handleChange(field.fieldName, e.target.value)}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
               placeholder={field.placeholder}
-              className={`${commonClasses} ${errorClasses} pl-12`}
+              className={`${commonClasses} ${errorClasses} pl-12 ${isNumeric && !isIban ? '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none' : ''}`}
             />
-            <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+            <IconComponent className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
           </div>
         );
     }

@@ -7,11 +7,15 @@ import { HelmetProvider } from "react-helmet-async";
 import "./index.css";
 import { router } from "./router/Routes";
 
+import ErrorBoundary from "./components/ErrorBoundary";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <HelmetProvider>
-        <RouterProvider router={router} />
+        <ErrorBoundary>
+           <RouterProvider router={router} />
+        </ErrorBoundary>
       </HelmetProvider>
     </Provider>
   </StrictMode>

@@ -11,14 +11,10 @@ export const guidanceApi = {
   // Rehberde mesaj gönder
   sendMessage: (
     chatId: number, 
-    content: string, 
-    history?: MessageDto[]
+    content: string
   ): Promise<{ message: MessageDto; remainingCredits: number }> => {
     const formData = new FormData();
     formData.append("content", content);
-    if (history) {
-      formData.append("historyJson", JSON.stringify(history));
-    }
     return axiosClient
       .post(`/Chat/${chatId}/message`, formData)
       .then((res) => res.data);

@@ -6,11 +6,12 @@ import {
   FileText, 
   Search, 
   ArrowRight,
-  User as UserIcon,
   Activity,
   AlertCircle
 } from "lucide-react";
 import Seo from "../components/Seo";
+import PageBackground from "../components/PageBackground";
+import LegalDisclaimer from "../components/LegalDisclaimer";
 import { useNavigate } from "react-router-dom";
 
 
@@ -28,9 +29,7 @@ export default function DashboardPage() {
       />
 
       {/* Background Glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[20%] right-[-5%] w-[400px] h-[400px] bg-indigo-600/5 rounded-full blur-[100px]" />
-      </div>
+      <PageBackground />
 
       <div className="relative max-w-7xl mx-auto space-y-12 animate-fade-in-up">
         
@@ -40,19 +39,7 @@ export default function DashboardPage() {
             <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter italic mb-4 leading-[1.3] py-2">
               HOŞ GELDİN, <span className="text-gradient-vibrant inline-block pb-1 pr-1">{user.firstName || user.username}</span>
             </h1>
-            <p className="page-subtitle !mx-0 text-sm md:text-base">Bugün senin için hangi resmi süreci kolaylaştırabiliriz?</p>
-          </div>
-          <div className="hidden md:flex items-center gap-4">
-             <div className="px-5 py-2.5 glass-card flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
-                <span className="text-[11px] md:text-xs font-black text-gray-300 uppercase tracking-widest">{user.isPremium ? 'Premium Üye' : 'Standart Üye'}</span>
-             </div>
-             <button 
-              onClick={() => navigate("/profil")}
-              className="w-12 h-12 glass-card glass-card-hover flex items-center justify-center group"
-             >
-                <UserIcon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-             </button>
+            <p className="page-subtitle !mx-0 text-sm md:text-base">Bugün senin için hangi işlemi kolaylaştırabiliriz?</p>
           </div>
         </header>
 
@@ -87,7 +74,7 @@ export default function DashboardPage() {
                 { 
                   icon: Search, 
                   label: "Belge Analizi", 
-                  desc: "Hukuki metinlerdeki riskleri tespit et.", 
+                  desc: "Dökümanlardaki riskleri tespit et.", 
                   color: "pink", 
                   path: "/belge/analiz",
                   action: "ANALİZ ET"
@@ -98,7 +85,7 @@ export default function DashboardPage() {
                   <button 
                     key={idx}
                     onClick={() => navigate(item.path)}
-                    className="group glass-card glass-card-hover p-8 text-left h-full flex flex-col justify-between"
+                    className="group relative p-8 text-left h-full flex flex-col justify-between rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 hover:border-white/10 hover:from-white/[0.06] hover:to-white/[0.02] backdrop-blur-xl transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30"
                   >
                     <div>
                       <div className={`w-12 h-12 bg-${item.color}-500/10 rounded-2xl mb-6 flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -164,20 +151,24 @@ export default function DashboardPage() {
             <div className="glass-card p-8 space-y-6">
                <div className="flex items-center gap-2 mb-2">
                  <AlertCircle className="w-4 h-4 text-indigo-400" />
-                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Nasıl Kullanılır?</h3>
+                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Neler Yapabilirim?</h3>
                </div>
                
-               <div className="space-y-6">
+       <div className="space-y-6">
                   {[
-                    "Resepsiyon chat'ine problemini yaz ve süreci başlat.",
-                    "Yaver Rehber ile sana özel hazırlanan yol haritasını incele.",
-                    "Gereken dökümanları hazırla ve hukuki dilekçeni indir."
+                    "Rehber Sohbeti: Sorununuzu anlatın, size özel adım adım yol haritası çıkaralım.",
+                    "Dilekçe Oluşturma: İhtiyacınız olan dilekçeyi şablonlar üzerinden kolayca hazırlayın.",
+                    "Belge Analizi: Sözleşme veya evraklarınızı yükleyin, riskleri ve önemli maddeleri öğrenin."
                   ].map((hint, i) => (
                     <div key={i} className="flex gap-4 group">
                        <span className="w-7 h-7 rounded-xl bg-white/5 border border-white/5 text-indigo-400 flex items-center justify-center text-xs font-black shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-colors">{i+1}</span>
                        <span className="text-sm text-gray-400 font-medium leading-relaxed">{hint}</span>
                     </div>
                   ))}
+               </div>
+               
+               <div className="pt-4 border-t border-white/5">
+                 <LegalDisclaimer />
                </div>
             </div>
           </div>

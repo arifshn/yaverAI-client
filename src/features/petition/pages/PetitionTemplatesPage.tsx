@@ -43,8 +43,8 @@ export default function PetitionTemplatesPage() {
   }, [dispatch, user]);
 
   const handleSelectTemplate = (template: any) => {
-    // Premium değilse engelle
-    if (!user?.isPremium) {
+    // Premium değilse veya kredisi yetersizse (min 20 kredi) engelle
+    if (user && (!user.isPremium || user.credits < 20)) {
         setShowPaywall(true);
         return;
     }
@@ -97,7 +97,7 @@ export default function PetitionTemplatesPage() {
     <div className="min-h-screen bg-[#0a0b14] text-white relative mobile-safe-area pb-20 md:pb-0 overflow-x-hidden">
       <Seo 
         title="Dilekçe Kütüphanesi" 
-        description="Yüzlerce hazır hukuk ve resmi işlem dilekçe şablonuna erişin. Anında oluşturun ve kullanın."
+        description="Yüzlerce hazır işlem dilekçe şablonuna erişin. Anında oluşturun ve kullanın."
       />
       <PremiumPaywall
         isOpen={showPaywall}
@@ -120,17 +120,24 @@ export default function PetitionTemplatesPage() {
                 Dilekçe <span className="text-gradient-vibrant inline-block pb-1 pr-1">Kütüphanesi</span>
               </h1>
               <p className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-[0.2em] max-w-xl leading-relaxed">
-                İmza aşamasına hazır, profesyonelce kurgulanmış şablonlar.
+                Kullanıma hazır, profesyonelce kurgulanmış şablonlar.
               </p>
             </div>
             
-            <button
-               onClick={() => navigate("/dilekce/arsivim")}
-               className="flex items-center gap-3 px-6 md:px-8 py-3 md:py-4 glass-card glass-card-hover text-xs font-black uppercase tracking-widest text-indigo-400 group transition-all"
-            >
-               <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
-               <span>Arşivim</span>
-            </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="px-5 py-3 glass-card bg-indigo-500/5 border-indigo-500/10 rounded-2xl flex flex-col items-center sm:items-end justify-center">
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">İşlem Maliyeti</span>
+                    <span className="text-sm font-bold text-white">20 Kredi</span>
+                </div>
+
+                <button
+                   onClick={() => navigate("/dilekce/arsivim")}
+                   className="flex items-center justify-center gap-3 px-6 md:px-8 py-3 md:py-4 glass-card glass-card-hover text-xs font-black uppercase tracking-widest text-indigo-400 group transition-all"
+                >
+                   <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                   <span>Arşivim</span>
+                </button>
+            </div>
           </div>
 
           {/* Search Bar */}

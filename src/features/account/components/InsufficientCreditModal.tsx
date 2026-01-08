@@ -16,7 +16,6 @@ export default function InsufficientCreditModal({
   requiredCredits,
   currentCredits,
   missingCredits,
-  actionName,
 }: InsufficientCreditModalProps) {
   const navigate = useNavigate();
 

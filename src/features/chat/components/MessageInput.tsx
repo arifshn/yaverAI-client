@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Send, Sparkles } from "lucide-react";
 import { sendMessage, addUserMessage } from "../slices/chatSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
+import PremiumPaywall from "../../document/components/PremiumPaywall";
 
 interface MessageInputProps {
   chatId: number;
@@ -11,10 +12,18 @@ interface MessageInputProps {
 export default function MessageInput({ chatId }: MessageInputProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { sendingMessage } = useSelector((state: RootState) => state.chat);
+  const { user } = useSelector((state: RootState) => state.account);
   const [message, setMessage] = useState("");
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const handleSend = async () => {
     if (!message.trim()) return;
+
+    // Kredi kontrolü
+    if (user && !user.isPremium && user.credits <= 0) {
+      setShowPaywall(true);
+      return;
+    }
 
     const content = message.trim();
 
@@ -79,6 +88,12 @@ export default function MessageInput({ chatId }: MessageInputProps) {
           Yaver AI can make mistakes. Consider checking important information.
         </p>
       </div>
+      <PremiumPaywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="Sohbet"
+        showTimer={true}
+      />
     </div>
   );
 }

@@ -55,8 +55,8 @@ export default function DocumentAnalysisPage() {
   }, [currentAnalysis]);
 
   const handleUpload = async (file: File, documentType: string) => {
-    // Premium değilse engelle
-    if (user && !user.isPremium) {
+    // Premium değilse veya kredisi yetersizse (min 30 kredi) engelle
+    if (user && (!user.isPremium || user.credits < 30)) {
       setShowPaywall(true);
       return;
     }
@@ -65,7 +65,8 @@ export default function DocumentAnalysisPage() {
 
     if (analyzeDocument.rejected.match(result)) {
       const error = result.payload as any;
-      if (error?.message?.includes("Premium")) {
+      const errorMessage = typeof error === 'string' ? error : error?.message || '';
+      if (errorMessage.includes("Premium") || errorMessage.toLowerCase().includes('kredi') || errorMessage.toLowerCase().includes('credit')) {
         setShowPaywall(true);
       }
     }
@@ -231,7 +232,22 @@ export default function DocumentAnalysisPage() {
                     
                     <div className="glass-card overflow-hidden shadow-2xl relative bg-[#0a0b14]/50">
                         <DocumentChatPanel 
-                            documentContext={`DOC_NAME: ${currentAnalysis.originalFileName}\nRISK_SCORE: ${currentAnalysis.riskScore}/10\nSUMMARY: ${currentAnalysis.analysisSummary}`}
+                            documentContext={`## BELGE BİLGİLERİ
+DOSYA ADI: ${currentAnalysis.originalFileName}
+BELGE TÜRÜ: ${currentAnalysis.documentType || "Genel"}
+RİSK SKORU: ${currentAnalysis.riskScore}/10
+
+## ANALİZ ÖZETİ
+${currentAnalysis.analysisSummary}
+
+## ÖNEMLİ NOKTALAR
+${currentAnalysis.keyPoints?.map((p: string, i: number) => `${i + 1}. ${p}`).join('\n') || 'Yok'}
+
+## RİSKLİ ALANLAR
+${currentAnalysis.warnings?.map((w: string, i: number) => `${i + 1}. ${w}`).join('\n') || 'Yok'}
+
+## BELGENİN TAM METNİ
+${currentAnalysis.extractedText || 'Belge metni mevcut değil.'}`}
                             documentName={currentAnalysis.originalFileName}
                         />
                     </div>
@@ -259,9 +275,24 @@ export default function DocumentAnalysisPage() {
                     <h2 className="text-5xl md:text-6xl font-black text-white tracking-tighter italic mb-6">
                         Belgelerini <span className="text-gradient-vibrant">Konuştur</span>
                     </h2>
-                    <p className="text-sm text-gray-500 font-bold uppercase tracking-[0.2em] leading-relaxed max-w-xl mx-auto">
-                        Hukuki dökümanları yükleyin, kritik verileri ve riskleri yapay zeka ile anında raporlayın.
-                    </p>
+                    <div className="space-y-4 max-w-xl mx-auto">
+                        <p className="text-sm text-gray-500 font-bold uppercase tracking-[0.2em] leading-relaxed">
+                            Dökümanları yükleyin, kritik verileri ve riskleri yapay zeka ile anında raporlayın.
+                        </p>
+                        <div className="flex justify-center mt-6">
+                            <div className="group relative p-[1px] rounded-2xl overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 animate-pulse" />
+                                <div className="relative px-6 py-3 bg-[#0a0b14]/90 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Ortalama İşlem Maliyeti</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-black text-white italic tracking-tighter">30 - 80</span>
+                                        <span className="text-xs font-bold text-gray-400">Kredi</span>
+                                    </div>
+                                    <span className="text-[9px] text-gray-600 font-bold mt-1 uppercase tracking-wider">Dosya boyutuna göre değişir</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="relative group p-[1px] rounded-[40px] overflow-hidden">

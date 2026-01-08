@@ -1,12 +1,13 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5239/api/",
+  // baseURL: import.meta.env.VITE_API_URL || "http://localhost:5239/api/",
+  // GÜVENLİK İÇİN HARDCODED PRODUCTION URL
+  baseURL: "https://yaverapp.com.tr/api/",
 });
 
 axiosClient.interceptors.request.use(
   (config) => {
-    // ✅ FIX: Önce token'ı direkt al, yoksa user içinden al
     let token = localStorage.getItem("token");
 
     if (!token) {
@@ -37,11 +38,31 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Hem token hem user'ı temizle
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+    const { response } = error;
+
+    if (response) {
+      const { status } = response;
+
+      if (status === 401) {
+        // Hem token hem user'ı temizle
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        // Redirect logic can be improved to use router if possible, but window.location is safe fallback
+        if (window.location.pathname !== "/login" && window.location.pathname !== "/register")
+             window.location.href = "/login";
+      } else if (status >= 500) {
+        // Global Server Error
+        // react-toastify'ı buraya direkt import edip kullanabiliriz veya bir event emit edebiliriz.
+        // Basitlik için import edelim. Aksi takdirde circular dependency riski olabilir ama axiosClient bağımsızsa sorun olmaz.
+        import("react-toastify").then(({ toast }) => {
+             toast.error("Sunucu tarafında bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.");
+        });
+      }
+    } else {
+        // Network Error (No response)
+         import("react-toastify").then(({ toast }) => {
+             toast.error("Ağ hatası: Sunucuya erişilemiyor. Lütfen internet bağlantınızı kontrol ediniz.");
+        });
     }
 
     return Promise.reject(error);

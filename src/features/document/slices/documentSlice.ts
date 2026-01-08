@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { toast } from "react-toastify";
 import { documentApi } from "../api/documentApi";
@@ -44,8 +44,6 @@ export const analyzeDocument = createAsyncThunk(
   ) => {
     try {
       const response = await documentApi.analyzeDocument(file, documentType);
-
-      // ✅ Krediyi güncelle
       // Backend: { analysis: ..., creditInfo: { remainingCredits: ... } }
       if (response.creditInfo?.remainingCredits !== undefined) {
         dispatch(updateCredits(response.creditInfo.remainingCredits));
@@ -125,7 +123,6 @@ export const documentSlice = createSlice({
       })
       .addCase(analyzeDocument.fulfilled, (state, action) => {
         state.analyzing = false;
-        // ✅ Fix: Extract 'analysis' from the response object
         state.currentAnalysis = action.payload.analysis;
         state.error = null;
         toast.success("Analiz tamamlandı!");

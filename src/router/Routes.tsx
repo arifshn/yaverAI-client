@@ -22,6 +22,8 @@ import PrivacyPage from "../pages/PrivacyPage";
 import TermsPage from "../pages/TermsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import ErrorPage from "../pages/ErrorPage";
+import FAQPage from "../pages/FAQPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -34,6 +36,7 @@ export const router = createBrowserRouter([
       { path: "iletisim", element: <ContactPage /> },
       { path: "gizlilik-politikasi", element: <PrivacyPage /> },
       { path: "kullanim-sartlari", element: <TermsPage /> },
+      { path: "sss", element: <FAQPage /> },
 
       {
         element: <AuthGuard />,
@@ -75,7 +78,15 @@ export const router = createBrowserRouter([
                 element: <PaymentSuccessPage />,
               },
               {
+                path: "/payment-success",
+                element: <PaymentSuccessPage />,
+              },
+              {
                 path: "/odeme/basarisiz",
+                element: <PaymentFailedPage />,
+              },
+              {
+                path: "/payment-failed",
                 element: <PaymentFailedPage />,
               },
               {

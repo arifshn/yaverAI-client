@@ -11,12 +11,11 @@ import {
   Loader2,
   X,
   History,
-  CheckCircle2,
+
   Coins,
 } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { toast } from "react-toastify";
+import { formatDate } from "../../../utils/dateUtils";
 
 export default function SubscriptionManagement() {
   const { user } = useAppSelector((state) => state.account);
@@ -125,9 +124,7 @@ export default function SubscriptionManagement() {
                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Başlangıç</span>
               </div>
               <p className="font-bold text-xl text-white tracking-tight">
-                {subscription?.startDate && format(new Date(subscription.startDate), "d MMMM yyyy", {
-                  locale: tr,
-                })}
+                {subscription?.startDate && formatDate(subscription.startDate, "d MMMM yyyy")}
               </p>
             </div>
 
@@ -140,11 +137,7 @@ export default function SubscriptionManagement() {
               </div>
               <p className="font-bold text-xl text-white tracking-tight">
                 {subscription?.nextBillingDate
-                  ? format(
-                      new Date(subscription.nextBillingDate),
-                      "d MMMM yyyy",
-                      { locale: tr }
-                    )
+                  ? formatDate(subscription.nextBillingDate, "d MMMM yyyy")
                   : "—"}
               </p>
             </div>
@@ -182,7 +175,7 @@ export default function SubscriptionManagement() {
                <div>
                   <h4 className="text-sm font-black text-yellow-200 uppercase tracking-wide mb-1">Abonelik İptal Edildi</h4>
                   <p className="text-sm text-yellow-200/60 leading-relaxed font-medium">
-                     Premium ayrıcalıklarınız {subscription.endDate && format(new Date(subscription.endDate), "d MMMM yyyy", { locale: tr })} tarihine kadar devam edecektir.
+                     Premium ayrıcalıklarınız {subscription.endDate && formatDate(subscription.endDate, "d MMMM yyyy")} tarihine kadar devam edecektir.
                   </p>
                </div>
             </div>
@@ -207,9 +200,7 @@ export default function SubscriptionManagement() {
         <div className="glass-card p-12 text-center mb-16 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="relative z-10">
-            <div className="w-20 h-20 glass-card flex items-center justify-center mx-auto mb-6 text-indigo-400 group-hover:scale-110 transition-transform duration-500">
-              <Sparkles className="w-10 h-10" />
-            </div>
+
             <h3 className="text-3xl font-black text-white mb-4 italic tracking-tighter">Premium'a <span className="text-gradient-vibrant inline-block pb-1 pr-1">Yükselt</span></h3>
             <p className="text-gray-400 max-w-lg mx-auto mb-10 font-medium leading-relaxed">
               Sınırsız sohbet, belge analizi ve dilekçe oluşturma gibi ayrıcalıklı özelliklere erişin.
@@ -244,61 +235,109 @@ export default function SubscriptionManagement() {
                <p className="text-gray-500 font-medium">Henüz bir işlem geçmişiniz bulunmuyor.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Tarih</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">İşlem Detayı</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Tutar</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Durum</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-6">
-                        <span className="text-xs font-bold text-gray-300">
-                          {format(new Date(payment.createdAt), "d MMM yyyy, HH:mm", { locale: tr })}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          {payment.type === "Subscription" ? (
-                            <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">
-                              <Sparkles className="w-4 h-4 text-indigo-400" />
-                            </div>
-                          ) : (
-                            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20 group-hover:bg-purple-500/20 transition-colors">
-                              <Coins className="w-4 h-4 text-purple-400" />
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                             <span className="text-sm font-bold text-white">
-                                {payment.type === "Subscription" ? "Premium Abonelik" : "Ek Kredi Paketi"}
-                             </span>
-                             <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                                {payment.type === "Subscription" ? "Aylık Plan" : `${payment.creditAmount} Kredi`}
-                             </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="text-sm font-black text-white px-3 py-1 bg-white/5 rounded-lg border border-white/5">
-                            ₺{payment.amount.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-2">
-                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                           <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Başarılı</span>
-                        </div>
-                      </td>
+            <>
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Tarih</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">İşlem Detayı</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Tutar</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Durum</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {payments.map((payment) => (
+                      <tr key={payment.id} className="group hover:bg-white/[0.02] transition-colors">
+                        <td className="px-8 py-6">
+                          <span className="text-xs font-bold text-gray-300">
+                            {formatDate(payment.createdAt)}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            {payment.type === "Subscription" ? (
+                              <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">
+                                <Sparkles className="w-4 h-4 text-indigo-400" />
+                              </div>
+                            ) : (
+                              <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20 group-hover:bg-purple-500/20 transition-colors">
+                                <Coins className="w-4 h-4 text-purple-400" />
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                               <span className="text-sm font-bold text-white">
+                                  {payment.type === "Subscription" ? "Premium Abonelik" : "Ek Kredi Paketi"}
+                               </span>
+                               <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
+                                  {payment.type === "Subscription" ? "Aylık Plan" : `${payment.creditAmount} Kredi`}
+                               </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <span className="text-sm font-black text-white px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                              ₺{payment.amount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                             <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Başarılı</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="md:hidden space-y-4 p-4">
+                 {payments.map((payment) => (
+                    <div key={payment.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors relative overflow-hidden group">
+                        {/* Status Line */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+
+                        <div className="flex items-start justify-between mb-4">
+                           <div className="flex items-center gap-3">
+                              {payment.type === "Subscription" ? (
+                                <div className="p-2.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                                  <Sparkles className="w-5 h-5 text-indigo-400" />
+                                </div>
+                              ) : (
+                                <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                                  <Coins className="w-5 h-5 text-purple-400" />
+                                </div>
+                              )}
+                              <div>
+                                 <h4 className="text-sm font-bold text-white">
+                                    {payment.type === "Subscription" ? "Premium Abonelik" : "Ek Kredi Paketi"}
+                                 </h4>
+                                 <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block mt-0.5">
+                                    {payment.type === "Subscription" ? "Aylık Plan" : `${payment.creditAmount} Kredi`}
+                                 </span>
+                              </div>
+                           </div>
+                           <span className="text-sm font-black text-white px-2.5 py-1 bg-white/5 rounded-lg border border-white/5">
+                              ₺{payment.amount.toFixed(2)}
+                           </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs pt-3 border-t border-white/5">
+                             <span className="text-gray-500 font-medium">
+                               {formatDate(payment.createdAt)}
+                             </span>
+                            <div className="flex items-center gap-1.5">
+                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+                               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Başarılı</span>
+                            </div>
+                        </div>
+                    </div>
+                 ))}
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -1,10 +1,11 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { FieldValues } from "react-hook-form";
 import type { User } from "../models/IUser";
 import { accountApi } from "../api/accountApi";
 import { toast } from "react-toastify";
 import { router } from "../../../router/Routes";
 import { updateCredits } from "./creditSlice";
+import { logout as firebaseLogout } from "../../../lib/firebaseConfig";
 
 interface AccountState {
   user: User | null;
@@ -40,7 +41,6 @@ export const loginUser = createAsyncThunk<User, FieldValues>(
 export const getUser = createAsyncThunk<User>(
   "account/getuser",
   async (_, { rejectWithValue, dispatch }) => {
-    // ✅ dispatch ekle
     try {
       const user = await accountApi.getUser();
       const normalizedUser = {
@@ -49,8 +49,6 @@ export const getUser = createAsyncThunk<User>(
       };
 
       localStorage.setItem("user", JSON.stringify(normalizedUser));
-
-      // ✅ CreditSlice'ı da güncelle
       if (normalizedUser.credits !== undefined) {
         dispatch(updateCredits(normalizedUser.credits));
       }
@@ -214,6 +212,17 @@ export const changePassword = createAsyncThunk<void, FieldValues>(
   }
 );
 
+export const logoutUser = createAsyncThunk(
+  "account/logoutUser",
+  async (_) => {
+    try {
+      await firebaseLogout();
+    } catch (error: any) {
+      console.error("Firebase logout error:", error);
+    }
+  }
+);
+
 export const accountSlice = createSlice({
   name: "account",
   initialState,
@@ -235,15 +244,24 @@ export const accountSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        // Firebase logout handled in thunk
+        router.navigate("/home");
+        toast.info("Çıkış yapıldı");
+      })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.loading = false;
-
         toast.success("Giriş başarılı!");
       })
       .addCase(loginUser.rejected, (_, action) => {
-
-        toast.error("Giriş başarısız!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Giriş başarısız!";
+        toast.error(message);
       })
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
@@ -251,24 +269,22 @@ export const accountSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.loading = false;
-
         toast.success("Kayıt başarılı!");
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("Kayıt başarısız!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Kayıt başarısız!";
+        toast.error(message);
       })
       .addCase(getUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.loading = false;
-
       })
-      .addCase(getUser.rejected, (state, action) => {
+      .addCase(getUser.rejected, (state) => {
         state.user = null;
         localStorage.removeItem("user");
         router.navigate("/home");
-
       })
       .addCase(updateProfile.pending, (state) => {
         state.loading = true;
@@ -280,10 +296,9 @@ export const accountSlice = createSlice({
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
-
-
-
-        toast.error("Profil güncellenemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Profil güncellenemedi!";
+        toast.error(message);
       })
       .addCase(updateEmail.pending, (state) => {
         state.loading = true;
@@ -295,8 +310,9 @@ export const accountSlice = createSlice({
       })
       .addCase(updateEmail.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("E-posta güncellenemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "E-posta güncellenemedi!";
+        toast.error(message);
       })
       .addCase(updateUsername.pending, (state) => {
         state.loading = true;
@@ -308,8 +324,9 @@ export const accountSlice = createSlice({
       })
       .addCase(updateUsername.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("Kullanıcı adı güncellenemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Kullanıcı adı güncellenemedi!";
+        toast.error(message);
       })
       .addCase(changePassword.pending, (state) => {
         state.loading = true;
@@ -320,8 +337,9 @@ export const accountSlice = createSlice({
       })
       .addCase(changePassword.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("Şifre değiştirilemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Şifre değiştirilemedi!";
+        toast.error(message);
       })
 
       .addCase(uploadAvatar.pending, (state) => {
@@ -334,8 +352,9 @@ export const accountSlice = createSlice({
       })
       .addCase(uploadAvatar.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("Avatar yüklenemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Avatar yüklenemedi!";
+        toast.error(message);
       })
 
       .addCase(deleteAvatar.pending, (state) => {
@@ -348,10 +367,58 @@ export const accountSlice = createSlice({
       })
       .addCase(deleteAvatar.rejected, (state, action) => {
         state.loading = false;
-
-        toast.error("Avatar silinemedi!");
+        const error = action.payload as any;
+        const message = getErrorMessage(error) || "Avatar silinemedi!";
+        toast.error(message);
+      })
+      
+      // Listen for credit updates from creditSlice
+      .addCase(updateCredits, (state, action) => {
+        if (state.user) {
+          state.user.credits = action.payload;
+          // Update local storage to persist the change immediately
+          localStorage.setItem("user", JSON.stringify(state.user));
+        }
       });
   },
 });
 
 export const { setUser, logout } = accountSlice.actions;
+
+// Helper function to parse error messages from various backend formats
+function getErrorMessage(error: any): string {
+  if (!error) return "";
+  
+  // 1. If it's a simple string
+  if (typeof error === "string") return error;
+  
+  // 2. If it has a specific 'error' property (common in our rejectWithValue calls)
+  if (error.error) {
+    if (typeof error.error === "string") return error.error;
+    if (typeof error.error === "object") return getErrorMessage(error.error);
+  }
+
+  // 3. ASP.NET Problem Details / Validation Errors
+  if (error.errors) {
+    // If errors is an array of objects with 'description' (IdentityError)
+    if (Array.isArray(error.errors)) {
+       return error.errors.map((e: any) => e.description || e.code).join(", ");
+    }
+    // If errors is an object (ValidationProblemDetails)
+    return Object.values(error.errors).flat().join(", ");
+  }
+
+  // 4. Checking for 'detail' or 'title' (ProblemDetails)
+  if (error.detail) return error.detail;
+  if (error.title) return error.title;
+  
+  // 5. Array of IdentityErrors directly
+  if (Array.isArray(error)) {
+      return error.map((e: any) => e.description || e.message || JSON.stringify(e)).join(", ");
+  }
+  
+  // 6. Generic message property
+  if (error.message) return error.message;
+
+  return JSON.stringify(error);
+}

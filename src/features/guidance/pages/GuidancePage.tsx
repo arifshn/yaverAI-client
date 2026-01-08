@@ -10,25 +10,33 @@ import {
 import { guidanceApi } from "../api/guidanceApi";
 import { toast } from "react-toastify";
 import { useAppDispatch } from "../../../store/store";
-import { updateCredits } from "../../account/slices/creditSlice";
+import { updateCredits, fetchCreditInfo } from "../../account/slices/creditSlice";
+import CreditBadge from "../../account/components/CreditBadge";
 import Seo from "../../../components/Seo";
+import PageBackground from "../../../components/PageBackground";
+import PremiumPaywall from "../../document/components/PremiumPaywall";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../store/store";
 
 export default function GuidancePage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { user } = useSelector((state: RootState) => state.account);
   const [chatId, setChatId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [roadmapData, setRoadmapData] = useState<any | null>(null);
   const [redirectionLoading, setRedirectionLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     handleStart();
-  }, []);
+    dispatch(fetchCreditInfo());
+  }, [dispatch]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -46,24 +54,37 @@ export default function GuidancePage() {
 
   const handleStart = async () => {
     setLoading(true);
+    // Show welcome message immediately to ensure it appears
+    const welcomeMsg = { 
+      role: "assistant", 
+      content: "Merhaba! Ben Yaver. Size nasıl yardımcı olabilirim? Lütfen yaşadığınız sorunu veya gerçekleştirmek istediğiniz resmi işlemi kısaca anlatın.",
+      createdAt: new Date().toISOString() 
+    };
+    setMessages([welcomeMsg]);
+
     try {
       const chat = await guidanceApi.startGuidance();
       setChatId(chat.id);
-      const welcomeMsg = { 
-        role: "assistant", 
-        content: "Merhaba! Ben Yaver. Size nasıl yardımcı olabilirim? Lütfen yaşadığınız sorunu veya gerçekleştirmek istediğiniz resmi işlemi kısaca anlatın.",
-        createdAt: new Date().toISOString() 
-      };
-      setMessages([welcomeMsg]);
     } catch (error) {
-      toast.error("Rehber başlatılamadı.");
+      // Don't show toast error if it's just startup, user can still see previous messages or welcome
+      console.error("Rehber başlatma hatası:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSend = async () => {
-    if (!input.trim() || !chatId || loading || roadmapData) return;
+    // Kredi kontrolü - En başta yapılmalı (min 1 kredi)
+    if (user && user.credits < 1) {
+       setShowPaywall(true);
+       return;
+    }
+
+    if (!input.trim() || loading || roadmapData) return;
+    
+    // ChatID kontrolü kredi kontrolünden SONRA yapılmalı
+    // Çünkü 0 kredi ile chatId oluşmamış olabilir
+    if (!chatId) return;
 
     const userMsg = { role: "user", content: input, createdAt: new Date().toISOString() };
     setMessages((prev) => [...prev, userMsg]);
@@ -72,7 +93,7 @@ export default function GuidancePage() {
     setLoading(true);
 
     try {
-      const response = await guidanceApi.sendMessage(chatId, currentInput, messages);
+      const response = await guidanceApi.sendMessage(chatId, currentInput);
       const content = response.message.content;
       const jsonMatch = content.match(/```roadmap-json\s*([\s\S]*?)\s*```/);
       
@@ -93,22 +114,35 @@ export default function GuidancePage() {
       }
       dispatch(updateCredits(response.remainingCredits));
       
-    } catch (error) {
-      toast.error("Bir hata oluştu.");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data || error?.data || error?.message || '';
+      if (errorMessage.toString().includes("Premium") || errorMessage.toString().toLowerCase().includes('kredi') || errorMessage.toString().toLowerCase().includes('credit')) {
+         setShowPaywall(true);
+      } else {
+         toast.error("Bir hata oluştu.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen bg-[#0a0b14] flex flex-col overflow-hidden relative font-sans">
+    <div className="h-[100dvh] bg-[#0a0b14] flex flex-col overflow-hidden relative font-sans">
       <Seo 
         title="Yaver Rehber" 
-        description="Hukuki veya resmi işlemleriniz için adım adım akıllı yol haritası oluşturun."
+        description="İşlemleriniz için adım adım akıllı yol haritası oluşturun."
+      />
+      <PageBackground />
+      <PageBackground />
+      <PremiumPaywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="Rehber Sohbeti"
+        showTimer={true}
       />
       
       {/* Header - Only show when chat starts or roadmap exists */}
-      {(messages.length > 1 || roadmapData) && (
+      {(messages.length > 0 || roadmapData) && (
         <div className="shrink-0 px-8 py-6 border-b border-white/5 bg-[#0a0b14]/40 backdrop-blur-xl z-30 animate-fade-in-down">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-5">
@@ -121,9 +155,12 @@ export default function GuidancePage() {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 glass-card">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Çevrimiçi</span>
+            <div className="hidden md:flex items-center gap-4">
+               <CreditBadge />
+               <div className="flex items-center gap-2 px-4 py-2 glass-card">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Çevrimiçi</span>
+               </div>
             </div>
           </div>
         </div>
@@ -136,8 +173,8 @@ export default function GuidancePage() {
       >
         <div className="max-w-4xl w-full mx-auto px-6 py-6 md:py-10 min-h-full flex flex-col justify-end md:justify-start">
             
-            {/* Initial Hero State */}
-            {messages.length <= 1 && !roadmapData && (
+            {/* Initial Hero State - Only if no messages */}
+            {messages.length === 0 && !roadmapData && (
                 <div className="flex flex-col items-center justify-center flex-1 min-h-[50vh] text-center space-y-6 animate-fade-in">
                     <div className="w-16 h-16 md:w-20 md:h-20 glass-card rounded-full flex items-center justify-center mx-auto text-indigo-400 shadow-[0_0_40px_rgba(99,102,241,0.2)]">
                         <Activity className="w-8 h-8 md:w-10 md:h-10" />
@@ -147,13 +184,13 @@ export default function GuidancePage() {
                         <span className="text-gradient-vibrant inline-block pb-1 pr-1">Yardımcı Olabilirim?</span>
                     </h2>
                     <p className="text-sm md:text-base text-gray-400 font-medium max-w-lg mx-auto leading-relaxed">
-                        Hukuki süreçler, resmi başvurular veya aklınıza takılan herhangi bir bürokratik işlem... Sadece anlatın, sizin için bir yol haritası çıkaralım.
+                        Süreçler, başvurular veya aklınıza takılan herhangi bir bürokratik işlem... Sadece anlatın, sizin için bir yol haritası çıkaralım.
                     </p>
                 </div>
             )}
 
             {/* Chat Messages */}
-            {(messages.length > 1 || roadmapData) && (
+            {(messages.length > 0 || roadmapData) && (
                 <div className="space-y-8 pb-4">
                     {messages.map((msg, idx) => (
                         <div
@@ -181,7 +218,7 @@ export default function GuidancePage() {
                         </div>
                     ))}
 
-                    {loading && (
+                    {loading && messages.length > 1 && (
                         <div className="flex justify-start animate-fade-in-up">
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2 px-2">
@@ -204,7 +241,7 @@ export default function GuidancePage() {
                             <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
                             <div className="relative glass-card p-8 md:p-12 bg-indigo-600/10 overflow-hidden rounded-[32px]">
                                 <div className="absolute top-0 right-0 p-10 pointer-events-none opacity-5">
-                                <Map className="w-32 h-32 text-white" />
+                                    <Map className="w-32 h-32 text-white" />
                                 </div>
                                 <div className="relative z-10">
                                 <h3 className="page-title !text-2xl md:!text-4xl">Yol Haritanız <span className="text-gradient-vibrant inline-block pb-1 pr-1">Hazır</span></h3>
@@ -244,7 +281,7 @@ export default function GuidancePage() {
 
       {/* Input Area (Fixed Bottom) */}
       {!roadmapData && (
-         <div className="shrink-0 w-full p-4 md:p-6 bg-[#0a0b14]/90 backdrop-blur-xl border-t border-white/5 z-40">
+         <div className="shrink-0 w-full p-4 md:p-6 bg-[#0a0b14]/90 backdrop-blur-xl border-t border-white/5 z-40 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="max-w-2xl mx-auto w-full relative group">
                 <div className="absolute inset-0 bg-indigo-500/10 blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
                 <div className="relative flex items-center gap-3 glass-card p-3 bg-[#0a0b14] border-white/10 group-focus-within:border-indigo-500/30 transition-all rounded-[32px]">

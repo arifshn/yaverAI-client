@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "../../../store/store";
 import { getUser } from "../../account/slices/accountSlice";
@@ -10,7 +10,7 @@ import {
   Loader2,
   Crown,
   Zap,
-  Shield,
+
   Headphones,
   Coins,
 } from "lucide-react";
@@ -26,7 +26,6 @@ export default function PaymentSuccessPage() {
   const isCreditPurchase = paymentType === "creditpurchase";
 
   useEffect(() => {
-    // ✅ Token sync - user objesi içindeki token'ı localStorage'a da yaz
     const syncToken = () => {
       const userString = localStorage.getItem("user");
       if (userString) {
@@ -34,7 +33,6 @@ export default function PaymentSuccessPage() {
           const user = JSON.parse(userString);
           if (user.token) {
             localStorage.setItem("token", user.token);
-
           }
         } catch (error) {
           console.error("❌ Token sync error:", error);
@@ -43,21 +41,49 @@ export default function PaymentSuccessPage() {
     };
 
     const loadData = async () => {
+      syncToken();
+      
+      // Initial fetch to get current state
       try {
-        syncToken();
         await dispatch(getUser()).unwrap();
         await dispatch(fetchCreditInfo()).unwrap();
       } catch (error) {
-        console.error("Veri yükleme hatası:", error);
-      } finally {
-        setLoading(false);
+        console.error("Initial load error:", error);
       }
+
+      setLoading(false);
     };
 
-    setTimeout(() => {
-      loadData();
-    }, 1000);
-  }, [dispatch]);
+    loadData();
+
+    // POLLING: If it's a subscription and user isn't premium yet, poll every 2s for 10s
+    let attempts = 0;
+    const maxAttempts = 5;
+    let pollInterval: any;
+
+    if (paymentType === 'subscription' && !isCreditPurchase) {
+      pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const result = await dispatch(getUser()).unwrap();
+          if (result.isPremium) {
+             clearInterval(pollInterval);
+             // Success - user is now premium
+          }
+        } catch (e) {
+           console.error("Polling error", e);
+        }
+
+        if (attempts >= maxAttempts) {
+           clearInterval(pollInterval);
+        }
+      }, 2000);
+    }
+
+    return () => {
+       if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [dispatch, paymentType, isCreditPurchase]);
 
   if (loading) {
     return (
@@ -151,18 +177,20 @@ export default function PaymentSuccessPage() {
                   <Sparkles className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Tüm Özellikler</p>
-                  <p className="text-sm text-gray-400">Kullanıma hazır</p>
+                  <p className="font-semibold text-white">Dilekçe Oluşturma</p>
+                  <p className="text-sm text-gray-400">
+                    {isCreditPurchase ? "Kredinizle oluşturun" : "Tüm şablonlar aktif"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-4 bg-gray-800/50 border border-gray-700/50 rounded-xl">
                 <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-blue-400" />
+                  <Coins className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Öncelikli Erişim</p>
-                  <p className="text-sm text-gray-400">Daha hızlı işlem</p>
+                  <p className="font-semibold text-white">Belge Analizi</p>
+                  <p className="text-sm text-gray-400">Döküman yükleme aktif</p>
                 </div>
               </div>
 
@@ -171,8 +199,8 @@ export default function PaymentSuccessPage() {
                   <Headphones className="w-5 h-5 text-pink-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Premium Destek</p>
-                  <p className="text-sm text-gray-400">7/24 yanınızdayız</p>
+                  <p className="font-semibold text-white">Sürekli Destek</p>
+                  <p className="text-sm text-gray-400">Yaver rehberliği</p>
                 </div>
               </div>
             </div>

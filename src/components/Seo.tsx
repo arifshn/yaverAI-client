@@ -7,7 +7,7 @@ interface SeoProps {
 }
 
 export default function Seo({ title, description, canonical }: SeoProps) {
-  const metaDescription = description || "Yaver Dilekçe - Hukuki ve resmi süreçlerinizde yapay zeka destekli rehberiniz.";
+  const metaDescription = description || "Yaver Dilekçe - Süreçlerinizde yapay zeka destekli rehberiniz.";
   const fullTitle = `${title} | Yaver`;
 
   return (

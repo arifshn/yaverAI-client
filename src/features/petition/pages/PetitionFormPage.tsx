@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -9,7 +9,9 @@ import {
 import { fetchTemplate, createPetition } from "../slices/petitionSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
 import PetitionForm from "../components/PetitionForm";
+import CreditBadge from "../../account/components/CreditBadge";
 import Seo from "../../../components/Seo";
+import PremiumPaywall from "../../document/components/PremiumPaywall";
 
 export default function PetitionFormPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,6 +20,8 @@ export default function PetitionFormPage() {
   const { selectedTemplate, loading, creating } = useSelector(
     (state: RootState) => state.petition
   );
+  const { user } = useSelector((state: RootState) => state.account);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -28,6 +32,19 @@ export default function PetitionFormPage() {
   const handleSubmit = async (formData: Record<string, string>) => {
     if (!selectedTemplate) return;
 
+    // Kredi kontrolü
+    if (user && (!user.isPremium || user.credits <= 0)) {
+        if (!user.isPremium) {
+           setShowPaywall(true);
+           return;
+        }
+        // Premium ama kredisi yok
+        if (user.isPremium && user.credits <= 0) {
+            setShowPaywall(true);
+            return;
+        }
+    }
+
     const result = await dispatch(
       createPetition({
         templateId: selectedTemplate.id,
@@ -37,6 +54,13 @@ export default function PetitionFormPage() {
 
     if (createPetition.fulfilled.match(result)) {
       navigate(`/dilekce/onizleme/${result.payload.id}`);
+    } else if (createPetition.rejected.match(result)) {
+      const errorPayload = result.payload as any;
+      // Hata mesajı kredi ile ilgiliyse paywall'u aç
+      const errorMessage = typeof errorPayload === 'string' ? errorPayload : errorPayload?.message || '';
+      if (errorMessage.toLowerCase().includes('kredi') || errorMessage.toLowerCase().includes('credit')) {
+          setShowPaywall(true);
+      }
     }
   };
 
@@ -49,7 +73,7 @@ export default function PetitionFormPage() {
             <div className="absolute inset-0 border-2 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
             <FileText className="absolute inset-0 m-auto w-8 h-8 text-indigo-400 animate-pulse" />
           </div>
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Hukuki taslak yükleniyor...</p>
+          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Taslak yükleniyor...</p>
         </div>
       </div>
     );
@@ -81,6 +105,13 @@ export default function PetitionFormPage() {
          title={selectedTemplate ? `${selectedTemplate.name} Oluştur` : "Dilekçe Oluştur"} 
          description={selectedTemplate?.description || "Yaver ile saniyeler içinde dilekçe oluşturun."}
        />
+       
+       <PremiumPaywall 
+         isOpen={showPaywall} 
+         onClose={() => setShowPaywall(false)} 
+         feature="Dilekçe Oluşturma"
+       />
+
        {/* Background Ambience */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[120px]"></div>
@@ -102,7 +133,12 @@ export default function PetitionFormPage() {
             </button>
             <div className="flex items-center gap-4">
                <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
-               <span className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] italic">yaverAI <span className="text-gradient-vibrant">Sihirbazı</span></span>
+               <span className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] italic hidden sm:block">yaverAI <span className="text-gradient-vibrant">Sihirbazı</span></span>
+            </div>
+            
+             {/* Credit Badge - Mobile Responsive */}
+            <div className="ml-auto">
+               <CreditBadge />
             </div>
           </div>
         </div>
@@ -120,8 +156,6 @@ export default function PetitionFormPage() {
                 Aşağıdaki alanları doğru ve eksiksiz doldurarak profesyonel dilekçenizi oluşturun.
               </p>
             </div>
-
-            {/* Stepper Removed as requested */}
 
             {/* Form Section */}
             <div className="relative group">

@@ -45,7 +45,7 @@ export default function ChatWindow() {
               Size nasıl yardımcı olabilirim?
             </h2>
             <p className="text-lg text-gray-400 font-medium">
-              Yaver AI ile dilekçe hazırlayın, hukuki sorularınızı sorun.
+              Yaver AI ile dilekçe hazırlayın, sorularınızı sorun.
             </p>
           </div>
         </div>

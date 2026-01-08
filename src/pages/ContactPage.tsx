@@ -5,7 +5,6 @@ import {
   MessageSquare,
   ArrowLeft,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -52,7 +51,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0b14] text-white overflow-hidden">
+    <div className="min-h-screen bg-[#0a0b14] text-white overflow-hidden flex flex-col justify-between">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px]"></div>
@@ -60,17 +59,25 @@ export default function ContactPage() {
       </div>
 
       {/* Header / Nav */}
-      <div className="absolute top-0 left-0 w-full p-6 z-20">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 px-4 py-2 glass-card hover:bg-white/5 transition-all text-gray-400 hover:text-white group text-sm font-bold"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="uppercase tracking-wide">Ana Sayfa</span>
-        </Link>
+      <div className="relative z-20">
+        <div className="max-w-7xl mx-auto p-6 flex justify-between items-center">
+            <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-4 py-2 glass-card hover:bg-white/5 transition-all text-gray-400 hover:text-white group text-sm font-bold"
+            >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span className="uppercase tracking-wide">Ana Sayfa</span>
+            </Link>
+            
+            <div className="flex items-center gap-2">
+                <span className="text-2xl font-black tracking-tighter text-gradient-vibrant italic inline-block pb-1 pr-1">
+                yaverAI
+                </span>
+            </div>
+        </div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-24 flex-grow w-full">
         {/* Title Section */}
         <div className="text-center mb-12 animate-fade-in-up">
           <h1 className="page-title">
@@ -82,10 +89,10 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start animate-fade-in-up animation-delay-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start animate-fade-in-up animation-delay-200">
           {/* Contact Info */}
-          <div className="space-y-8">
-            <div className="glass-card p-10 relative overflow-hidden group">
+          <div className="space-y-8 order-2 md:order-1">
+            <div className="glass-card p-8 md:p-10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all"></div>
 
               <h3 className="text-xl font-black mb-8 flex items-center gap-3 italic">
@@ -105,10 +112,10 @@ export default function ContactPage() {
                       E-posta
                     </p>
                     <a
-                      href="mailto:destek@yaverdilekce.com"
-                      className="text-lg font-bold text-white hover:text-indigo-400 transition-colors"
+                      href="mailto:destek@yaverapp.com.tr"
+                      className="text-lg font-bold text-white hover:text-indigo-400 transition-colors break-all"
                     >
-                      destek@yaverdilekce.com
+                      destek@yaverapp.com.tr
                     </a>
                   </div>
                 </div>
@@ -131,7 +138,7 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Form */}
-          <div className="glass-card p-10 bg-[#0a0b14]/50">
+          <div className="glass-card p-8 md:p-10 bg-[#0a0b14]/50 order-1 md:order-2">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -240,6 +247,18 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="relative border-t border-white/5 bg-[#0a0b14]/50 backdrop-blur-xl py-8 mt-auto w-full flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-bold uppercase tracking-[0.1em] text-gray-500">
+           <span>© 2025 yaverAI</span>
+           <div className="flex flex-wrap justify-center gap-4 md:gap-8">
+                <Link to="/gizlilik-politikasi" className="hover:text-indigo-400 transition-colors">Gizlilik</Link>
+                <Link to="/kullanim-sartlari" className="hover:text-indigo-400 transition-colors">Şartlar</Link>
+                <Link to="/iletisim" className="hover:text-indigo-400 transition-colors">İletişim</Link>
+           </div>
+        </div>
+      </footer>
     </div>
   );
 }

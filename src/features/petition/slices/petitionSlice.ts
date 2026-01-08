@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { toast } from "react-toastify";
 import { petitionApi } from "../api/petitionApi";
@@ -56,11 +56,8 @@ export const fetchTemplate = createAsyncThunk(
 export const createPetition = createAsyncThunk(
   "petition/createPetition",
   async (dto: CreatePetitionDto, { rejectWithValue, dispatch }) => {
-    // ✅ dispatch ekle
     try {
       const response = await petitionApi.createPetition(dto);
-
-      // ✅ Krediyi güncelle
       if (response.remainingCredits !== undefined) {
         dispatch(updateCredits(response.remainingCredits));
       }
@@ -189,8 +186,15 @@ export const petitionSlice = createSlice({
         toast.error(error?.message || "Dilekçe oluşturulamadı");
       })
 
+      .addCase(fetchMyPetitions.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchMyPetitions.fulfilled, (state, action) => {
+        state.loading = false;
         state.myPetitions = action.payload;
+      })
+      .addCase(fetchMyPetitions.rejected, (state) => {
+        state.loading = false;
       })
 
       .addCase(fetchPetition.pending, (state) => {

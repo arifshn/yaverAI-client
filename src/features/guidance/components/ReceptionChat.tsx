@@ -4,6 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { guidanceApi } from "../api/guidanceApi";
 import type { MessageDto } from "../../chat/models/IChat";
 
+// Reception suggestion chips
+const RECEPTION_CHIPS = [
+  "Bu uygulama ne işe yarıyor?",
+  "Dilekçe oluşturmak istiyorum",
+  "Sözleşmemi analiz ettirmek istiyorum",
+  "Bir sorunum var, yardım et"
+];
+
 export default function ReceptionChat() {
   const [messages, setMessages] = useState<MessageDto[]>([]);
   const [input, setInput] = useState("");
@@ -26,18 +34,18 @@ export default function ReceptionChat() {
   }, [messages, loading]);
 
   useEffect(() => {
-    // Start a temporary reception chat
     const start = async () => {
+      const welcome: MessageDto = {
+        id: 0,
+        role: "assistant",
+        content: "Merhaba! Ben Yaver. Aşağıdaki seçeneklerden birini seçebilir veya doğrudan sorunuzu yazabilirsiniz.",
+        createdAt: new Date().toISOString()
+      };
+      setMessages([welcome]);
+
       try {
         const chat = await guidanceApi.startGuidance("Karşılama", "Reception");
         setChatId(chat.id);
-        const welcome: MessageDto = {
-          id: 0,
-          role: "assistant",
-          content: "Merhaba! Ben Yaver. Sana nasıl yardımcı olabilirim? Merak ettiğin bir konuyu kısaca yazabilirsin.",
-          createdAt: new Date().toISOString()
-        };
-        setMessages([welcome]);
       } catch (err) {
         console.error("Failed to start reception chat", err);
       }
@@ -45,13 +53,14 @@ export default function ReceptionChat() {
     start();
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || !chatId || loading) return;
+  const handleSend = async (messageContent?: string) => {
+    const content = messageContent || input;
+    if (!content.trim() || !chatId || loading) return;
 
     const userMsg: MessageDto = {
       id: Date.now(),
       role: "user",
-      content: input,
+      content: content,
       createdAt: new Date().toISOString()
     };
 
@@ -60,8 +69,7 @@ export default function ReceptionChat() {
     setLoading(true);
 
     try {
-      // Reception chat doesn't need long history, but we send it anyway for turn context
-      const response = await guidanceApi.sendMessage(chatId, userMsg.content, messages);
+      const response = await guidanceApi.sendMessage(chatId, content);
       setMessages(prev => [...prev, response.message]);
     } catch (err) {
       console.error("Failed to send message", err);
@@ -134,8 +142,24 @@ export default function ReceptionChat() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="p-6 bg-[#0a0b14]/40 border-t border-white/5 backdrop-blur-md">
+      {/* Input Area with Suggestion Chips */}
+      <div className="p-4 md:p-6 bg-[#0a0b14]/40 border-t border-white/5 backdrop-blur-md">
+        {/* Suggestion Chips - Only show if only welcome message */}
+        {messages.length <= 1 && !loading && (
+          <div className="flex flex-wrap gap-2 mb-4 justify-center">
+            {RECEPTION_CHIPS.map((suggestion, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(suggestion)}
+                className="px-4 py-2 text-xs font-bold rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all hover:scale-105 active:scale-95"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input Field */}
         <div className="relative group">
           <div className="absolute inset-0 bg-indigo-500/10 blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
           <div className="relative flex items-center glass-card bg-[#0a0b14]/50 border-white/5 group-focus-within:border-indigo-500/30 transition-all rounded-[24px] overflow-hidden p-2">
@@ -147,12 +171,12 @@ export default function ReceptionChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Örn: Kira hukuku veya uygulama kullanımı..."
+                placeholder="Nasıl yardımcı olabilirim?"
                 className="flex-1 bg-transparent py-3 pl-4 pr-4 text-sm text-white placeholder-gray-600 focus:outline-none font-medium"
                 disabled={loading}
             />
             <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
                 className="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[16px] flex items-center justify-center transition-all shadow-lg active:scale-90 disabled:opacity-50 shrink-0"
             >
@@ -164,3 +188,4 @@ export default function ReceptionChat() {
     </div>
   );
 }
+

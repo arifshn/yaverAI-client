@@ -7,6 +7,7 @@ import { useAppDispatch } from "../store/store";
 import { setUser, logout } from "../features/account/slices/accountSlice";
 import { loginWithGoogle } from "../lib/firebaseConfig";
 import Seo from "../components/Seo";
+import PageBackground from "../components/PageBackground";
 
 export default function HomePage() {
   const { user } = useSelector((state: RootState) => state.account);
@@ -40,14 +41,15 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0a0b14] text-white flex flex-col justify-between overflow-x-hidden">
       <Seo 
-        title="Yaver AI - Resmi Belgelerinizi Yeniden Tanımlayın" 
-        description="Resmi dilekçelerinizi oluşturun, hukuksal metinleri analiz edin ve karmaşık bürokratik süreçler için akıllı rehberlik alın."
+        title="Yaver AI - Belgelerinizi Yeniden Tanımlayın" 
+        description="Dilekçelerinizi oluşturun, metinleri analiz edin ve karmaşık süreçler için akıllı rehberlik alın."
       />
-      {/* Background Orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+      <Seo 
+        title="Yaver AI - Belgelerinizi Yeniden Tanımlayın" 
+        description="Dilekçelerinizi oluşturun, metinleri analiz edin ve karmaşık süreçler için akıllı rehberlik alın."
+      />
+      {/* Shared Background */}
+      <PageBackground />
 
       {/* Top Navigation */}
       <nav className="relative z-50 p-6 flex justify-between items-center max-w-7xl mx-auto w-full">
@@ -87,9 +89,7 @@ export default function HomePage() {
       <div className="relative flex-grow flex items-center justify-center py-20">
         <div className="relative max-w-6xl mx-auto px-6 text-center">
             <div className="space-y-8 max-w-4xl mx-auto animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-md">
-                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Resmi Yazışmalar İçin Yapay Zeka</span>
-              </div>
+
 
               <h1 className="text-6xl md:text-8xl font-black text-white leading-[1.1] tracking-tighter italic">
                 Belgelerinizi <br />
@@ -99,7 +99,7 @@ export default function HomePage() {
               </h1>
               
               <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
-                  Yaver AI ile dökümanlarınızı analiz edin, resmi dilekçelerinizi saniyeler içinde hazırlayın ve süreçlerinizi hızlandırın.
+                  Yaver AI ile dökümanlarınızı analiz edin, dilekçelerinizi saniyeler içinde hazırlayın ve süreçlerinizi hızlandırın.
               </p>
             </div>
 
@@ -129,16 +129,12 @@ export default function HomePage() {
                 </div>
                )}
               
-              {!user && (
-                <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">
-                   Kayıt gerekmez • Google ile bağlan
-                </p>
-              )}
+
             </div>
 
           {/* Capabilities Section */}
           <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up animation-delay-400">
-            <div className="glass-card glass-card-hover p-8 text-left">
+            <div className="group relative p-8 text-left rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 hover:border-white/10 hover:from-white/[0.06] hover:to-white/[0.02] backdrop-blur-xl transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30">
               <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-6">
                 <Layout className="w-6 h-6 text-indigo-400" />
               </div>
@@ -148,17 +144,17 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-card glass-card-hover p-8 text-left">
+            <div className="group relative p-8 text-left rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 hover:border-white/10 hover:from-white/[0.06] hover:to-white/[0.02] backdrop-blur-xl transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30">
               <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6">
                 <FileText className="w-6 h-6 text-purple-400" />
               </div>
               <h3 className="text-2xl font-bold mb-3 text-white">Dilekçe Hazırla</h3>
               <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                Resmi kurumlara uygun, hukuki formatta dilekçelerinizi saniyeler içinde oluşturun ve indirin.
+                Kurumlara uygun formatta dilekçelerinizi saniyeler içinde oluşturun ve indirin.
               </p>
             </div>
 
-            <div className="glass-card glass-card-hover p-8 text-left">
+            <div className="group relative p-8 text-left rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 hover:border-white/10 hover:from-white/[0.06] hover:to-white/[0.02] backdrop-blur-xl transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30">
               <div className="w-12 h-12 bg-pink-500/10 rounded-xl flex items-center justify-center mb-6">
                 <MessageCircle className="w-6 h-6 text-pink-400" />
               </div>
@@ -181,12 +177,13 @@ export default function HomePage() {
                  <AlertTriangle className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                  <p className="text-xs text-gray-400 leading-relaxed font-medium">
                    <strong>Yasal Uyarı:</strong> Bu uygulama bir yapay zeka asistanıdır ve sağladığı bilgiler tavsiye niteliğindedir. 
-                   Herhangi bir resmi kurumla bağlantısı yoktur. Profesyonel destek almanız önerilir.
+                   Herhangi bir kamu kurumuyla bağlantısı yoktur. Profesyonel destek almanız önerilir.
                  </p>
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row items-center md:items-end md:justify-end gap-10 text-xs font-bold uppercase tracking-[0.1em] text-gray-500">
+                <Link to="/sss" className="hover:text-indigo-400 transition-colors">S.S.S</Link>
                 <Link to="/iletisim" className="hover:text-indigo-400 transition-colors">İletişim</Link>
                 <Link to="/gizlilik-politikasi" className="hover:text-indigo-400 transition-colors">Gizlilik</Link>
                 <Link to="/kullanim-sartlari" className="hover:text-indigo-400 transition-colors">Şartlar</Link>

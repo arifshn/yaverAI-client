@@ -77,7 +77,7 @@ export default function MyPetitionsPage() {
     <div className="min-h-screen bg-[#0a0b14] text-white relative mobile-safe-area pb-20 md:pb-0 overflow-x-hidden">
        <Seo 
          title="Dilekçe Arşivim" 
-         description="Oluşturduğunuz tüm hukuki dilekçeler ve resmi belgeler burada güvenle saklanır."
+         description="Oluşturduğunuz tüm dilekçeler ve belgeler burada güvenle saklanır."
        />
        {/* Background Ambience */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -94,7 +94,7 @@ export default function MyPetitionsPage() {
                 Dilekçe <span className="text-gradient-vibrant">Arşivi</span>
               </h1>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] max-w-xl leading-relaxed">
-                Tüm yasal süreçleriniz ve oluşturduğunuz belgeler güvenli bir şekilde burada saklanır.
+                Oluşturduğunuz tüm dilekçeleri burada görüntüleyebilir, cihazınıza indirebilir veya silebilirsiniz.
               </p>
             </div>
 

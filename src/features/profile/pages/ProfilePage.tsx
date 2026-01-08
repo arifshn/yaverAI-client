@@ -62,7 +62,7 @@ export default function ProfilePage() {
                Profil <span className="text-gradient-vibrant inline-block pb-1 pr-1">Yönetimi</span>
             </h1>
             <p className="page-subtitle !mx-0">
-               Profil bilgilerinizi, abonelik durumunuzu ve güvenlik ayarlarınızı buradan yönetebilirsiniz.
+               Mevcut abonelik durumunuzu inceleyebilir, yeni paketler satın alabilir ve hesap ayarlarınızı yönetebilirsiniz.
             </p>
          </div>
 

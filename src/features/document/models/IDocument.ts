@@ -8,6 +8,7 @@ export interface DocumentAnalysisDto {
   keyPoints: string[];
   warnings: string[];
   suggestions: string[];
+  extractedText?: string; // Full document text for chat context
   createdAt: string;
   remainingCredits?: number;
 }

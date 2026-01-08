@@ -11,8 +11,8 @@ import {
   type UserCredential,
 } from "firebase/auth";
 
-// Backend API URL (ASP.NET'inizin çalıştığı adres)
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5239";
+// Backend API URL
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || "http://localhost:5000";
 
 // Firebase Config Type
 
@@ -41,14 +41,14 @@ export interface BackendAuthResponse {
   };
 }
 
-// Firebase Console'dan aldığın config bilgilerini buraya yapıştır
+// Firebase Console'dan aldığın config bilgilerini .env dosyasına koy
 const firebaseConfig = {
-  apiKey: "AIzaSyCf3NLHahevXOlh75aiZvRhGAcQlsurUU4",
-  authDomain: "yaver-ai.firebaseapp.com",
-  projectId: "yaver-ai",
-  storageBucket: "yaver-ai.firebasestorage.app",
-  messagingSenderId: "102109979950",
-  appId: "1:102109979950:web:04a4c4fc8886a2841bc6bf",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };
 
 // Firebase'i başlat
@@ -57,6 +57,9 @@ const auth: Auth = getAuth(app);
 
 // Providers
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 const appleProvider = new OAuthProvider("apple.com");
 
 // Google ile giriş fonksiyonu

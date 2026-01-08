@@ -8,6 +8,7 @@ export interface User {
   id: string;
   email: string;
   premiumEndDate: string | null;
+  autoRenew: boolean;
   avatarUrl: string;
   phoneNumber: string;
   credits: number;

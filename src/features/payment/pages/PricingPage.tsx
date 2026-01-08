@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../store/store";
-import { paymentApi, subscriptionApi } from "../api/paymentApi";
+import { subscriptionApi } from "../api/paymentApi";
 import {
   Check,
   Shield,
   Loader2,
   MessageCircle,
-  FileText,
   Search,
   ShoppingCart,
   Activity,
   CreditCard,
+  Star,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import type { CreditPackageDto } from "../models/IPayment";
@@ -30,6 +30,18 @@ export default function PricingPage() {
     fetchPackages();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (packages.length > 0 && params.get("highlight")) {
+        setTimeout(() => {
+             const element = document.getElementById("packages-section");
+             if (element) {
+                 element.scrollIntoView({ behavior: "smooth", block: "center" });
+             }
+        }, 100);
+    }
+  }, [packages]);
+
   const fetchPackages = async () => {
     try {
       const data = await subscriptionApi.getCreditPackages();
@@ -39,75 +51,85 @@ export default function PricingPage() {
     }
   };
 
-  const handleUpgrade = async () => {
+  // Helper to handle auto-submit form
+  const handlePaymentRequest = async (type: "subscription" | "credit", packageId?: number, creditAmount?: number) => {
     if (!user) {
       navigate("/");
       return;
     }
-
-    if (user.isPremium) {
-      toast.info("Zaten Premium üyesiniz!");
-      return;
-    }
+    
+    setLoading(true);
+    if (packageId) setPurchaseLoading(packageId);
 
     try {
-      setLoading(true);
-      const response = await paymentApi.initiateSubscription();
-      if (response.success && response.paymentPageUrl) {
-        window.location.href = response.paymentPageUrl;
-      } else {
-        toast.error(response.errorMessage || "Ödeme başlatılamadı");
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://yaverapp.com.tr/api/payment/buy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+           type,
+           packageId,
+           creditAmount
+        })
+      });
+
+      if (!response.ok) {
+        toast.error("Ödeme servisine erişilemedi.");
+        return;
       }
+
+      // Backend HTML (Form) döner
+      const html = await response.text();
+      
+      // Geçici bir div oluşturup, HTML'i içine basarız ve formu submit ederiz
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      document.body.appendChild(div);
+      
+      const form = div.querySelector("form");
+      if (form) {
+        form.submit(); // Otomatik Yönlendirme
+      } else {
+        toast.error("Ödeme formu oluşturulamadı.");
+      }
+
     } catch (error) {
-      console.error("Ödeme hatası:", error);
-      toast.error("Bir hata oluştu. Lütfen tekrar deneyin.");
+       console.error("Ödeme hatası:", error);
+       toast.error("Bir hata oluştu.");
     } finally {
-      setLoading(false);
+       setLoading(false);
+       setPurchaseLoading(null);
     }
   };
 
-  const handlePurchaseCredits = async (packageId: number) => {
-    if (!user) {
-      navigate("/");
-      return;
-    }
 
-    try {
-      setPurchaseLoading(packageId);
-      const response = await paymentApi.initiateCreditPurchase(packageId);
-      if (response.success && response.paymentPageUrl) {
-        window.location.href = response.paymentPageUrl;
-      } else {
-        toast.error(response.errorMessage || "Ödeme başlatılamadı");
-      }
-    } catch (error) {
-      console.error("Kredi alım hatası:", error);
-      toast.error("Bir hata oluştu. Lütfen tekrar deneyin.");
-    } finally {
-      setPurchaseLoading(null);
-    }
-  };
+  const handleUpgrade = () => handlePaymentRequest("subscription");
+  const handlePurchaseCredits = (pkgId: number, amount: number) => handlePaymentRequest("credit", pkgId, amount);
+
 
   const premiumFeatures = [
     {
       icon: <Activity className="w-5 h-5 text-indigo-400" />,
-      title: "Aylık 1500 Kredi",
-      description: "Her ay yenilenen geniş kredi havuzu.",
+      title: "1500 Kredi",
+      description: "1 ay boyunca geçerli geniş kredi havuzu.",
     },
     {
       icon: <MessageCircle className="w-5 h-5 text-purple-400" />,
-      title: "Gelişmiş Destek",
-      description: "Hukuki ve resmi süreçlerde tam rehberlik.",
-    },
-    {
-      icon: <FileText className="w-5 h-5 text-pink-400" />,
-      title: "Dilekçe Sihirbazı",
-      description: "Profesyonel ve hukuki dilekçe oluşturma.",
+      title: "Tüm Şablonlar",
+      description: "Tüm dilekçe şablonlarını kullanabilirsiniz.",
     },
     {
       icon: <Search className="w-5 h-5 text-indigo-400" />,
-      title: "Detaylı Analiz",
-      description: "Dökümanlardaki riskleri ve fırsatları görün.",
+      title: "Belge Analizi",
+      description: "Döküman yükleyerek analiz yapabilirsiniz.",
+    },
+    {
+      icon: <Activity className="w-5 h-5 text-pink-400" />,
+      title: "Rehber Hizmeti",
+      description: "Adım adım rehberlik alabilirsiniz.",
     },
   ];
 
@@ -139,7 +161,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto mb-32 animate-fade-in-up animation-delay-200">
              <div className="grid lg:grid-cols-2 gap-10">
                 {/* Free Plan */}
-                <div className="glass-card p-12 flex flex-col justify-between opacity-80">
+                <div className="p-12 flex flex-col justify-between opacity-80 rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 backdrop-blur-xl">
                    <div>
                      <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-8">Standart Plan</h3>
                      <div className="flex items-baseline gap-2 mb-10">
@@ -175,11 +197,11 @@ export default function PricingPage() {
                    <div className="relative h-full glass-card p-12 bg-[#0a0b14]/90 backdrop-blur-3xl flex flex-col justify-between">
                      <div>
                         <div className="flex justify-between items-start mb-8">
-                           <h3 className="text-sm font-black text-indigo-400 uppercase tracking-[0.2em]">Premium Plan</h3>
+                           <h3 className="text-sm font-black text-indigo-400 uppercase tracking-[0.2em]">1 Aylık Hizmet Paketi</h3>
                         </div>
                         <div className="flex items-baseline gap-2 mb-10">
                            <span className="text-6xl font-black text-white italic">₺49,90</span>
-                           <span className="text-gray-500 font-bold uppercase text-xs tracking-widest">/aylık</span>
+                           <span className="text-gray-500 font-bold uppercase text-xs tracking-widest">/tek seferlik</span>
                         </div>
                         
                         <div className="grid grid-cols-1 gap-6">
@@ -203,10 +225,10 @@ export default function PricingPage() {
                          disabled={loading || user?.isPremium}
                          className={`btn-primary w-full py-5 text-sm uppercase tracking-[0.2em] ${user?.isPremium ? 'opacity-100 cursor-default hover:scale-100 bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20' : ''}`}
                        >
-                         {loading ? "Yönlendiriliyor..." : (user?.isPremium ? "Aktif Üyelik" : "Hemen Yükselt")}
+                         {loading ? "Yönlendiriliyor..." : (user?.isPremium ? "Hizmetiniz Aktif" : "Hemen Satın Al")}
                        </button>
                        <p className="text-[10px] text-center text-gray-500 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                         <Shield className="w-3 h-3" /> Güvenli Ödeme • iyzico
+                         <Shield className="w-3 h-3" /> Güvenli Ödeme • Shopier
                        </p>
                      </div>
                    </div>
@@ -223,48 +245,51 @@ export default function PricingPage() {
              </div>
 
              <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {packages.map((pkg) => (
-                  <div key={pkg.id} className="glass-card glass-card-hover p-8 group">
-                     <div className="flex justify-between items-start mb-10">
-                        <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-purple-400 group-hover:scale-110 transition-transform">
-                           <CreditCard className="w-6 h-6" />
-                        </div>
-                     </div>
-                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{pkg.name}</span>
-                     <h3 className="text-3xl font-black text-white mt-1 mb-6 italic">{pkg.creditAmount} <span className="text-sm not-italic text-gray-400">Kredi</span></h3>
-                     
-                     <div className="flex items-center justify-between pt-8 border-t border-white/5">
-                        <div>
-                           <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Fiyat</p>
-                           <p className="text-xl font-black text-white">₺{pkg.price.toFixed(2)}</p>
-                        </div>
-                        <button 
-                          onClick={() => handlePurchaseCredits(pkg.id)}
-                          disabled={purchaseLoading === pkg.id}
-                          className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/5 transition-all"
-                        >
-                           {purchaseLoading === pkg.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
-                        </button>
-                     </div>
-                  </div>
-                ))}
+                {packages.map((pkg) => {
+                  const isPopular = pkg.creditAmount === 500;
+                  return (
+                    <div key={pkg.id} className={`group relative p-8 rounded-3xl bg-gradient-to-br border backdrop-blur-xl transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 ${isPopular ? 'from-indigo-900/40 to-indigo-900/10 border-indigo-500/50 hover:border-indigo-500 hover:from-indigo-900/50 hover:to-indigo-900/20 ring-1 ring-indigo-500/50' : 'from-white/[0.03] to-transparent border-white/5 hover:border-white/10 hover:from-white/[0.06] hover:to-white/[0.02]'}`}>
+                       
+                       {isPopular && (
+                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-500/20 whitespace-nowrap z-10">
+                            En Çok Tercih Edilen
+                         </div>
+                       )}
+
+                       <div className="flex justify-between items-start mb-10">
+                          <div className={`p-3 rounded-xl border transition-transform group-hover:scale-110 ${isPopular ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400' : 'bg-white/5 border-white/5 text-purple-400'}`}>
+                             <CreditCard className="w-6 h-6" />
+                          </div>
+                          {isPopular && (
+                            <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20 animate-pulse">
+                              <Star className="w-4 h-4 text-indigo-400" />
+                            </div>
+                          )}
+                       </div>
+                       <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{pkg.name}</span>
+                       <h3 className="text-3xl font-black text-white mt-1 mb-6 italic">{pkg.creditAmount} <span className="text-sm not-italic text-gray-400">Kredi</span></h3>
+                       
+                       <div className={`flex items-center justify-between pt-8 border-t ${isPopular ? 'border-indigo-500/20' : 'border-white/5'}`}>
+                          <div>
+                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Fiyat</p>
+                             <p className="text-xl font-black text-white">₺{pkg.price.toFixed(2)}</p>
+                          </div>
+                          <button 
+                            onClick={() => handlePurchaseCredits(pkg.id, pkg.creditAmount)}
+                            disabled={purchaseLoading === pkg.id}
+                            className={`p-4 rounded-xl border transition-all ${isPopular ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20' : 'bg-white/5 hover:bg-white/10 text-white border-white/5'}`}
+                          >
+                             {purchaseLoading === pkg.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
+                          </button>
+                       </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
         )}
 
-        {/* FAQ Preview */}
-        <div className="mt-40 max-w-3xl mx-auto space-y-8 opacity-60">
-           <h3 className="text-center text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-12">Sıkça Sorulan Sorular</h3>
-           {[
-             { q: "Aboneliği dilediğim zaman iptal edebilir miyim?", a: "Evet, profil sayfanızdan tek tıkla iptal edebilirsiniz. Fatura döneminiz sonuna kadar kullanmaya devam edersiniz." },
-             { q: "Ek krediler silinir mi?", a: "Hayır, satın alınan ek paket kredileri üyeliğiniz bitse dahi hesabınızda kalır ve dilediğiniz zaman kullanabilirsiniz." }
-           ].map((faq, i) => (
-             <div key={i} className="glass-card p-8">
-                <p className="text-sm font-black text-white mb-3 tracking-tight">{faq.q}</p>
-                <p className="text-xs text-gray-400 font-medium leading-relaxed">{faq.a}</p>
-             </div>
-           ))}
-        </div>
+ 
       </div>
     </div>
   );

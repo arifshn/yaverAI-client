@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import { chatApi } from "../api/chatApi";
 import type {
@@ -40,7 +40,7 @@ export const createChat = createAsyncThunk(
   "chat/createChat",
   async (title: string | undefined, { rejectWithValue }) => {
     try {
-      return await chatApi.createChat(title);
+      return await chatApi.createChat({ title });
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Sohbet oluşturulamadı");
     }
@@ -70,8 +70,6 @@ export const sendMessage = createAsyncThunk(
   ) => {
     try {
       const response = await chatApi.sendMessage(chatId, content, files);
-
-      // ✅ Krediyi güncelle
       if (response.remainingCredits !== undefined) {
         dispatch(updateCredits(response.remainingCredits));
       }
